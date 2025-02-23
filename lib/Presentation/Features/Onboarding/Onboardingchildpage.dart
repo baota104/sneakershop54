@@ -2,7 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../utils.enum/Onboarding_Posion.dart';
+import '../utils.enum/OnboardingPosition.dart';
 
 class OnboardingChildPage extends StatelessWidget {
   const OnboardingChildPage({super.key, required this.onboardingPagePosition, required this.nextOnPressed});

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Login/LoginScreen.dart';
-import 'package:sneaker_shop/Presentation/Features/Onboarding/Onboarding_page_view.dart';
+import 'package:sneaker_shop/Presentation/Features/Onboarding/Onboardingpageview.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});

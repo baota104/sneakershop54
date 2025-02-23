@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Login/LoginScreen.dart';
 
-import '../utils.enum/Onboarding_Posion.dart';
-import 'Onboarding_child_page.dart';
+import '../utils.enum/OnboardingPosition.dart';
+import 'Onboardingchildpage.dart';
 
 class OnboardingPageView extends StatefulWidget {
   const OnboardingPageView({super.key});

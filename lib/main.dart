@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sneaker_shop/Presentation/Features/Login/LoginScreen.dart';
-import 'package:sneaker_shop/Presentation/Features/Onboarding/Onboarding_child_page.dart';
-import 'package:sneaker_shop/Presentation/Features/Onboarding/Onboarding_page_view.dart';
+import 'package:sneaker_shop/Presentation/Features/Onboarding/Onboardingchildpage.dart';
+import 'package:sneaker_shop/Presentation/Features/Onboarding/Onboardingpageview.dart';
 import 'package:sneaker_shop/Presentation/Features/Register/RegisterScreen.dart';
-import 'package:sneaker_shop/Presentation/Features/splash/Splash_Screen.dart';
+import 'package:sneaker_shop/Presentation/Features/splash/SplashScreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
