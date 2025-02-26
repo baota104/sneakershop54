@@ -1,9 +1,27 @@
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:sneaker_shop/Presentation/Features/Login/bloc/login_cubit.dart';
 import 'package:sneaker_shop/Presentation/Features/Register/RegisterScreen.dart';
+import 'package:sneaker_shop/domains/authentication_repository/authentication_repository.dart';
+
+// class loginpage extends StatelessWidget {
+//   const loginpage({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return BlocProvider(
+//       create: (context) {
+//         final authenticationrepository = context.read<
+//             AuthenticationRepository>();
+//         return LoginCubit(authenticationRepository: authenticationrepository);
+//       },
+//       child: Loginscreen(isFirstTimeInstallApp: false),
+//     );
+//   }
+// }
 
 class Loginscreen extends StatefulWidget {
   const Loginscreen({super.key, required this.isFirstTimeInstallApp});
@@ -15,6 +33,9 @@ class Loginscreen extends StatefulWidget {
 
 class _LoginscreenState extends State<Loginscreen> {
   bool isvisibleicon = true;
+  var _emailController = TextEditingController();
+  var _passController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,31 +63,33 @@ class _LoginscreenState extends State<Loginscreen> {
           ),
       ):null
       ),
-      body: Container(
-        constraints: BoxConstraints.expand(),
-        color: Colors.white,
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight:double.minPositive
-          ),
-            child: IntrinsicHeight(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                _buildtitleandcontent(),
-                _buildemailfield(),
-                _buildpasswordfield(),
-                _buildsigninbutton(),
-                _buildgoogle(),
-                _buildtextregister()
-                ],
+  body: SafeArea(
+        child: Container(
+          constraints: BoxConstraints.expand(),
+          color: Colors.white,
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight:double.minPositive
+            ),
+              child: IntrinsicHeight(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                  _buildtitleandcontent(),
+                  _buildemailfield(),
+                  _buildpasswordfield(),
+                  _buildsigninbutton(),
+                  _buildgoogle(),
+                  _buildtextregister()
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
+    )
     );
   }
   Widget _buildtitleandcontent(){
@@ -119,7 +142,7 @@ class _LoginscreenState extends State<Loginscreen> {
             TextFormField(
               autofocus: false,
               maxLines: 1,
-              // controller: _usernameController,
+              controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               style: TextStyle(color: Colors.black),
@@ -181,7 +204,7 @@ class _LoginscreenState extends State<Loginscreen> {
           ),
           TextFormField(
             maxLines: 1,
-            // controller: _passController,
+            controller: _passController,
             obscureText: isvisibleicon,
             keyboardType: TextInputType.text,
             textInputAction: TextInputAction.done,
@@ -248,7 +271,7 @@ class _LoginscreenState extends State<Loginscreen> {
       margin: EdgeInsets.symmetric(horizontal: 20,vertical: 24),
       width: double.infinity,
       child: ElevatedButton(onPressed: () {
-        // _onhandleloginsubmit();
+        _onhandleloginsubmit();
       }, style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF0D6EFD),
           shape: RoundedRectangleBorder(
@@ -329,5 +352,18 @@ class _LoginscreenState extends State<Loginscreen> {
       ),
     );
   }
+  void _onhandleloginsubmit(){
+    final logincubit = context.read<LoginCubit>();
+    var email = _emailController.text;
+    var password = _passController.text;
+    try{
+      logincubit.login(email, password);
+    }
+    catch(e){
+      print(e.toString());
+    }
+    return;
+  }
+
 
 }

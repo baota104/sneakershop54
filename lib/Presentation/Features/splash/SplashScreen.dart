@@ -62,7 +62,10 @@ class SplashScreen extends StatelessWidget {
                         // }else{
                         //   Navigator.pushReplacementNamed(context, "/sign-in");
                         // }
-                        Navigator.pushReplacementNamed(context, "/home");
+                        if (context.mounted) {
+                          Navigator.pushReplacementNamed(context, "/home");
+                        }
+
                       });
                     }
                 ),
