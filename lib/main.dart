@@ -107,7 +107,7 @@ class _MyAppState extends State<MyApp> {
                       ),
                           (route) => false,
                     );
-                  case AuthenticationStatus.unknow:
+                  case AuthenticationStatus.unknown:
                     // k lam gi
                     break;
                 }

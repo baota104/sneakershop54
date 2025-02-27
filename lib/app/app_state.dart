@@ -4,7 +4,7 @@ class AppState extends Equatable {
   final AuthenticationStatus status;
 
   const AppState({
-    this.status = AuthenticationStatus.unknow,
+    this.status = AuthenticationStatus.unknown,
 });
 
   AppState copyWith({
