@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sneaker_shop/Presentation/Features/Register/bloc/register_cubit.dart';
+import 'package:sneaker_shop/main.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class Registerscreen extends StatefulWidget {
   const Registerscreen({super.key});
@@ -10,6 +13,9 @@ class Registerscreen extends StatefulWidget {
 }
 
 class _RegisterscreenState extends State<Registerscreen> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _usermailController = TextEditingController();
+  final TextEditingController _userpassController = TextEditingController();
   bool isvisibleicon = true;
   @override
   Widget build(BuildContext context) {
@@ -18,28 +24,30 @@ class _RegisterscreenState extends State<Registerscreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
       ),
-      body: Container(
-        constraints: BoxConstraints.expand(),
-        color: Colors.white,
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-                minHeight:double.minPositive
-            ),
-            child: IntrinsicHeight(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  _buildtitleandcontent(),
-                  _buildnamefield(),
-                  _buildemailfield(),
-                  SizedBox(height: 25,),
-                  _buildpasswordfield(),
-                  _buildsignupbutton(),
-                  _buildgoogle(),
-                  _buildtextlogin()
-                ],
+      body: Form(
+        child: Container(
+          constraints: BoxConstraints.expand(),
+          color: Colors.white,
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                  minHeight:double.minPositive
+              ),
+              child: IntrinsicHeight(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _buildtitleandcontent(),
+                    _buildnamefield(),
+                    _buildemailfield(),
+                    SizedBox(height: 25,),
+                    _buildpasswordfield(),
+                    _buildsignupbutton(),
+                    _buildgoogle(),
+                    _buildtextlogin()
+                  ],
+                ),
               ),
             ),
           ),
@@ -96,7 +104,7 @@ class _RegisterscreenState extends State<Registerscreen> {
           TextFormField(
             autofocus: false,
             maxLines: 1,
-            // controller: _usernameController,
+            controller: _usernameController,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             style: TextStyle(color: Colors.black),
@@ -145,7 +153,7 @@ class _RegisterscreenState extends State<Registerscreen> {
           TextFormField(
             autofocus: false,
             maxLines: 1,
-            // controller: _usernameController,
+            controller: _usermailController,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             style: TextStyle(color: Colors.black),
@@ -207,7 +215,7 @@ class _RegisterscreenState extends State<Registerscreen> {
           ),
           TextFormField(
             maxLines: 1,
-            // controller: _passController,
+            controller: _userpassController,
             obscureText: isvisibleicon,
             keyboardType: TextInputType.text,
             textInputAction: TextInputAction.done,
@@ -249,21 +257,6 @@ class _RegisterscreenState extends State<Registerscreen> {
               ),
             ),
           ),
-          GestureDetector(
-            onTap: (){
-              print("hello");
-            },
-            child: Container(
-              alignment: Alignment.centerRight,
-              child: Text("Recovery Password",
-                style: TextStyle(
-                    color: Color(0xFF707B81),
-                    fontSize: 12,
-                    fontFamily: GoogleFonts.poppins().fontFamily
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -274,6 +267,7 @@ class _RegisterscreenState extends State<Registerscreen> {
       margin: EdgeInsets.symmetric(horizontal: 20,vertical: 24),
       width: double.infinity,
       child: ElevatedButton(onPressed: () {
+        _onsubmitregister();
       }, style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF0D6EFD),
           shape: RoundedRectangleBorder(
@@ -349,6 +343,18 @@ class _RegisterscreenState extends State<Registerscreen> {
         ],
       ),
     );
+  }
+  void _onsubmitregister(){
+    final registercubit = context.read<RegisterCubit>();
+    var email = _usermailController.text;
+    var password = _userpassController.text;
+    try{
+      registercubit.register(email, password);
+    }
+    catch(e){
+      print(e.toString()+"loi o register");
+    }
+
   }
 
 }

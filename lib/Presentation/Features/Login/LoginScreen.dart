@@ -7,22 +7,6 @@ import 'package:sneaker_shop/Presentation/Features/Login/bloc/login_cubit.dart';
 import 'package:sneaker_shop/Presentation/Features/Register/RegisterScreen.dart';
 import 'package:sneaker_shop/domains/authentication_repository/authentication_repository.dart';
 
-// class loginpage extends StatelessWidget {
-//   const loginpage({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return BlocProvider(
-//       create: (context) {
-//         final authenticationrepository = context.read<
-//             AuthenticationRepository>();
-//         return LoginCubit(authenticationRepository: authenticationrepository);
-//       },
-//       child: Loginscreen(isFirstTimeInstallApp: false),
-//     );
-//   }
-// }
-
 class Loginscreen extends StatefulWidget {
   const Loginscreen({super.key, required this.isFirstTimeInstallApp});
   final bool isFirstTimeInstallApp;

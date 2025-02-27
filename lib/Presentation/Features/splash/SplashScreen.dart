@@ -37,7 +37,7 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    _checkAppstate(context);
+    // _checkAppstate(context);
     return Scaffold(
       body: Container(
           color: Color(0xFF0D6EFD),
