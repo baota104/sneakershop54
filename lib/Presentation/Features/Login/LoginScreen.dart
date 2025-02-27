@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:sneaker_shop/Presentation/Features/Login/RecoveryScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/Login/bloc/login_cubit.dart';
 import 'package:sneaker_shop/Presentation/Features/Register/RegisterScreen.dart';
 import 'package:sneaker_shop/domains/authentication_repository/authentication_repository.dart';
@@ -232,7 +233,10 @@ class _LoginscreenState extends State<Loginscreen> {
           ),
           GestureDetector(
             onTap: (){
-              print("hello");
+              Navigator.push(context,
+                  MaterialPageRoute(
+                      builder: (context) => Recoveryscreen())
+              );
             },
             child: Container(
               alignment: Alignment.centerRight,
