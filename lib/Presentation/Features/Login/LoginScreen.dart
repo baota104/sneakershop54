@@ -111,7 +111,6 @@ class _LoginscreenState extends State<Loginscreen> {
   Widget _buildemailfield(){
     return Container(
       margin: EdgeInsets.symmetric(vertical: 30,horizontal: 20),
-
         height: 80,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,6 +345,7 @@ class _LoginscreenState extends State<Loginscreen> {
     var password = _passController.text;
     try{
       logincubit.login(email, password);
+      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> MainPage()));
     }
     catch(e){
       print(e.toString());

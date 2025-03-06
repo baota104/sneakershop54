@@ -1,23 +1,135 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
-class Mainscreen extends StatefulWidget {
-  const Mainscreen({super.key});
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/Home_Screen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/Menu_Screen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/Profile_Screen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/search/SearchScreen.dart';
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
 
   @override
-  State<Mainscreen> createState() => _MainscreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainscreenState extends State<Mainscreen> {
+class _MainScreenState extends State<MainScreen> {
+  List<Widget> _pages = [];
+  int _currentPage = 0;
+
+  // late List<TaskModel> _listleft;
+  // late List<TaskModel> _listdone;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _pages = [
+      HomeScreen(),
+      Searchscreen(),
+      Container(
+        color: Colors.yellow,
+      ),
+      Container(
+        color: Colors.purple,
+      ),
+     ProfileScreen()
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.red,
-      body: Container(
-        child: ElevatedButton(onPressed: (){
-          FirebaseAuth.instance.signOut();
-        }, child: Text("signout")),
+      // appBar: AppBar(
+      //   leading: IconButton(onPressed: (){},
+      //       icon: icon
+      //   ),
+      // ),
+      backgroundColor: Color(0xFF121212),
+      body: _pages.elementAt(_currentPage),
+      bottomNavigationBar: BottomNavigationBar(
+          backgroundColor: Colors.white,
+          type: BottomNavigationBarType.fixed,
+          unselectedItemColor: Colors.white,
+          selectedItemColor: Color(0xFF0D6EFD),
+          currentIndex: _currentPage,
+          onTap: (index) {
+            if (index == 2) return;
+            setState(() {
+              _currentPage = index;
+            });
+          },
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_filled,
+                color: Colors.grey,
+              ),
+              activeIcon:  Icon(Icons.home_filled,
+                color: Colors.grey,
+              ),
+              backgroundColor: Colors.transparent,
+              label: "Home",
+
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search,
+                color: Colors.grey,
+              ),
+              activeIcon: Icon(Icons.search,
+                color: Colors.grey,
+              ),
+              backgroundColor: Colors.transparent,
+              label: "Search",
+            ),
+            BottomNavigationBarItem(
+              icon: Container(),
+              label: "",
+              backgroundColor: Colors.transparent,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications,
+                color: Colors.grey,
+              ),
+              activeIcon: Icon(Icons.notifications,
+                color: Colors.grey,
+              ),
+              backgroundColor: Colors.transparent,
+              label: "Notification",
+            ),
+            BottomNavigationBarItem(
+              icon:Icon(Icons.person,
+                color: Colors.grey,
+              ),
+              activeIcon:
+              Icon(Icons.person,
+                color: Colors.grey,
+              ),
+              backgroundColor: Colors.transparent,
+              label: "Profile",
+            ),
+          ]
       ),
+      floatingActionButton: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+            color: Color(0xFF0D6EFD),
+            borderRadius: BorderRadius.circular(32)
+        ),
+        child: IconButton(onPressed: () {
+          setState(() {
+            _currentPage = 2;
+          });
+        },
+            icon: Icon(
+              Icons.heart_broken_rounded,
+              size: 30,
+              color: Colors.white,
+
+            )
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }

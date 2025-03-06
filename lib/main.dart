@@ -96,14 +96,14 @@ class _MyAppState extends State<MyApp> {
                   case AuthenticationStatus.authenticated:
                     _navigatorKey.currentState!.pushAndRemoveUntil(
                         MaterialPageRoute(
-                            builder: (context)=> const Mainscreen()
+                            builder: (context)=> const MainScreen()
                         ),
                         (route) => false,
                     );
                   case AuthenticationStatus.unauthenticated:
                     _navigatorKey.currentState!.pushAndRemoveUntil(
                       MaterialPageRoute(
-                          builder: (context)=> const Loginscreen(isFirstTimeInstallApp: true)
+                          builder: (context)=> const Loginscreen(isFirstTimeInstallApp: false)
                       ),
                           (route) => false,
                     );

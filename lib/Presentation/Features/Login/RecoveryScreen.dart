@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sneaker_shop/Presentation/Features/Login/LoginScreen.dart';
 
 class Recoveryscreen extends StatefulWidget {
   const Recoveryscreen({super.key});
@@ -11,12 +12,11 @@ class Recoveryscreen extends StatefulWidget {
 }
 
 class _RecoveryscreenState extends State<Recoveryscreen> {
+  final _emailController = TextEditingController();
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
-
       ),
       body: SafeArea(
           child:Container(
@@ -79,7 +79,7 @@ class _RecoveryscreenState extends State<Recoveryscreen> {
       child: TextFormField(
             autofocus: false,
             maxLines: 1,
-            // controller: _usermailController,
+            controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             style: TextStyle(color: Colors.black),
@@ -115,20 +115,56 @@ class _RecoveryscreenState extends State<Recoveryscreen> {
       margin: EdgeInsets.symmetric(horizontal: 20,vertical: 24),
       width: double.infinity,
       child: ElevatedButton(onPressed: () {
-        Navigator.pop(context);
+        // Navigator.pop(context);
         _onhandlesendemail();
       }, style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF0D6EFD),
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14)
           )
-      ), child: Text("Sign Up",
+      ), child: Text("Send",
         style: TextStyle(color: Colors.white,
         ),
       )),
     );
   }
-  void _onhandlesendemail(){
 
-  }
-}
+  void _onhandlesendemail(){
+    String email = _emailController.text.trim();
+    Future.delayed(const Duration(seconds: 2), () {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            title: Column(
+              children: [
+                Icon(Icons.email_outlined, size: 50, color: Colors.blue),
+                SizedBox(height: 10),
+                Text("Check Your Email", textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily:GoogleFonts.raleway().fontFamily,
+                  ),
+                ),
+              ],
+            ),
+            content:  Text(
+              "We have sent a password recovery code to your email.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily:GoogleFonts.poppins().fontFamily,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Đóng dialog
+                },
+                child: const Text("OK", style: TextStyle(color: Colors.blue)),
+              )
+            ],
+          );
+        },
+      );
+    });
+  }}
