@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../Product/ProductCard.dart';
+
 class Searchscreen extends StatefulWidget {
   const Searchscreen({super.key});
 
@@ -35,6 +37,9 @@ class _SearchscreenState extends State<Searchscreen> {
               children: [
               _builsearchfield(),
                 _buildcategoryfield(),
+                Expanded(child:
+                _buildlistproduct()
+                )
               ],
             ),
           )
@@ -84,7 +89,9 @@ class _SearchscreenState extends State<Searchscreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text("Select Category", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Text("Select Category", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+              fontFamily: GoogleFonts.poppins().fontFamily
+            )),
           ),
           SizedBox(height: 10),
           Container(
@@ -104,15 +111,14 @@ class _SearchscreenState extends State<Searchscreen> {
                     margin: EdgeInsets.symmetric(horizontal: 8),
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.blue : Colors.white,
+                      color: isSelected ? Color(0xFF0D6EFD) : Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.black26),
                     ),
                     child: Text(
                       _categories[index],
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.black,
-                        fontWeight: FontWeight.w500,
+                        fontFamily: GoogleFonts.poppins().fontFamily
                       ),
                     ),
                   ),
@@ -124,4 +130,22 @@ class _SearchscreenState extends State<Searchscreen> {
       ),
     );
   }
+  Widget _buildlistproduct() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.75,
+        ),
+        itemCount: 8,
+        itemBuilder: (context, index) {
+          return ProductCard();
+        },
+      ),
+    );
+  }
+
 }

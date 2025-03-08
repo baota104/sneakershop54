@@ -1,6 +1,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/CartScreen.dart';
+import 'package:sneaker_shop/Presentation/Features/Product/ProductCard.dart';
+import 'package:sneaker_shop/Presentation/Features/Product/ProductDetail.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/Menu_Screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,11 +21,15 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar:AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 10), // Đưa icon menu gần vào
-            child: GestureDetector(
-              onTap: () {},
-              child: Image.asset("assets/images/menu.png", width: 24, height: 24),
+          leading: Builder(
+            builder: (context) => Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: GestureDetector(
+                onTap: () {
+                  Scaffold.of(context).openDrawer(); // Mở Drawer đúng cách
+                },
+                child: Image.asset("assets/images/menu.png", width: 24, height: 24),
+              ),
             ),
           ),
           title: Center(
@@ -43,7 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 clipBehavior: Clip.none, // Cho phép hiển thị phần tử Positioned ra ngoài Stack
                 children: [
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>CartScreen()));
+                    },
                     child: Image.asset("assets/images/bag-2.png", width: 26, height: 26),
                   ),
                   Positioned(
@@ -63,10 +73,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      body: Column(
-        children: [
-          _buildnewarrive()
-        ],
+        drawer: Drawer(
+          child: MenuScreen(),
+        ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildnewarrive(),
+            SizedBox(height: 20,),
+            _buildProductList("Popular Shoes"),
+            SizedBox(height: 20,),
+            _buildProductList("Recommened for you")
+          ],
+        ),
       ),
         );
   }
@@ -82,13 +101,17 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 "New Arrivals",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                    fontFamily: GoogleFonts.raleway().fontFamily
+                ),
               ),
               GestureDetector(
                 onTap: () {},
                 child: Text(
                   "See all",
-                  style: TextStyle(color: Colors.blue, fontSize: 14),
+                  style: TextStyle(color: Colors.blue, fontSize: 14,
+                      fontFamily: GoogleFonts.poppins().fontFamily
+                  ),
                 ),
               ),
             ],
@@ -176,6 +199,66 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
-
   }
+  Widget _buildProductList(String title){
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      height: 230,
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                    fontFamily: GoogleFonts.raleway().fontFamily
+                ),
+              ),
+              GestureDetector(
+                onTap: () {},
+                child: Text(
+                  "See all",
+                  style: TextStyle(color: Colors.blue, fontSize: 14,
+                      fontFamily: GoogleFonts.raleway().fontFamily
+                  ),
+                ),
+              ),
+            ],
+          ),
+          _buildProductListItem(),
+        ],
+      ),
+    );
+  }
+  Widget _buildProductListItem() {
+    return Container(
+      height: 200, // Chiều cao danh sách sản phẩm
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          double cardWidth = constraints.maxWidth * 0.4; // Chiều rộng card tối đa 40% màn hình
+          return ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            itemCount: 5,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: GestureDetector(
+                  onTap: (){
+                    Navigator.push(context, MaterialPageRoute(builder:(context)=>ProductDetailScreen()));
+                  },
+                  child: SizedBox(
+                    width: cardWidth,
+                    child: ProductCard(),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
 }

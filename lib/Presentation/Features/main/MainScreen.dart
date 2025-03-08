@@ -2,8 +2,11 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:sneaker_shop/Presentation/Features/Product/ProductDetail.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/Home_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/Menu_Screen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/FavoriteScreen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification/NotificationScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/Profile_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/search/SearchScreen.dart';
 
@@ -27,12 +30,8 @@ class _MainScreenState extends State<MainScreen> {
     _pages = [
       HomeScreen(),
       Searchscreen(),
-      Container(
-        color: Colors.yellow,
-      ),
-      Container(
-        color: Colors.purple,
-      ),
+      FavoriteScreen(),
+      NotificationScreen(),
      ProfileScreen()
     ];
   }
@@ -122,9 +121,9 @@ class _MainScreenState extends State<MainScreen> {
           });
         },
             icon: Icon(
-              Icons.heart_broken_rounded,
+              Icons.favorite,
               size: 30,
-              color: Colors.white,
+              color:_currentPage == 2 ? Colors.pink:Colors.white,
 
             )
         ),

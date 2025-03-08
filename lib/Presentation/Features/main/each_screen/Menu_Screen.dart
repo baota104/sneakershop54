@@ -72,7 +72,7 @@ class MenuScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 7,horizontal: 15),
       child: InkWell( // Thêm hiệu ứng InkWell khi nhấn
         onTap: () {
-          // Thêm hành động khi nhấn
+
           print('$title tapped');
         },
         splashColor: Colors.white, // Màu sóng khi nhấn
