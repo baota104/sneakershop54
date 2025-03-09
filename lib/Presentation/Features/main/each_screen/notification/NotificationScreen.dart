@@ -1,35 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class NotificationScreen extends StatelessWidget {
+class NotificationScreen extends StatefulWidget {
   NotificationScreen({super.key});
 
-  // Danh sách thông báo mẫu (sẽ được thay thế bằng dữ liệu từ API hoặc database sau này)
-  final List<NotificationModel> notifications = [
+  @override
+  _NotificationScreenState createState() => _NotificationScreenState();
+}
+
+class _NotificationScreenState extends State<NotificationScreen> {
+  // Danh sách thông báo mẫu
+  List<NotificationModel> notifications = [
     NotificationModel(
-        imageUrl: "assets/images/onboard3.png",
-        title: "We Have New Products With Offers",
-        timeAgo: "7 min ago",
-        oldPrice: "\$364.95",
-        newPrice: "\$260.00"),
+      imageUrl: "assets/images/onboard3.png",
+      title: "We Have New Products With Offers",
+      timeAgo: "7 min ago",
+      oldPrice: "\$364.95",
+      newPrice: "\$260.00",
+    ),
     NotificationModel(
-        imageUrl: "assets/images/onboard3.png",
-        title: "We Have New Products With Offers",
-        timeAgo: "40 min ago",
-        oldPrice: "\$364.95",
-        newPrice: "\$260.00"),
+      imageUrl: "assets/images/onboard3.png",
+      title: "Limited Time Offer Just for You",
+      timeAgo: "40 min ago",
+      oldPrice: "\$250.00",
+      newPrice: "\$199.00",
+    ),
     NotificationModel(
-        imageUrl: "assets/images/onboard3.png",
-        title: "We Have New Products With Offers",
-        timeAgo: "40 min ago",
-        oldPrice: "\$364.95",
-        newPrice: "\$260.00"),
-    NotificationModel(
-        imageUrl: "assets/images/onboard3.png",
-        title: "We Have New Products With Offers",
-        timeAgo: "40 min ago",
-        oldPrice: "\$364.95",
-        newPrice: "\$260.00"),
+      imageUrl: "assets/images/onboard3.png",
+      title: "Special Sale on Your Favorite Items",
+      timeAgo: "1 hour ago",
+      oldPrice: "\$500.00",
+      newPrice: "\$350.00",
+    ),
   ];
 
   @override
@@ -43,10 +45,9 @@ class NotificationScreen extends StatelessWidget {
           children: [
             Text(
               "Recent",
-              style: TextStyle(
+              style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                fontFamily: GoogleFonts.poppins().fontFamily,
               ),
             ),
             SizedBox(height: 10),
@@ -60,21 +61,19 @@ class NotificationScreen extends StatelessWidget {
   // AppBar của màn hình
   AppBar _buildAppBar() {
     return AppBar(
-      title: Center(
-        child: Text(
-          "Notifications",
-          style: TextStyle(
-              fontSize: 20,
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              fontFamily: GoogleFonts.raleway().fontFamily),
+      title: Text(
+        "Notifications",
+        style: GoogleFonts.raleway(
+          fontSize: 20,
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
         ),
       ),
+      centerTitle: true,
       actions: [
         IconButton(
-          icon: Icon(Icons.delete_outline_outlined, color: Colors.black
-          ),
-          onPressed: () {},
+          icon: Icon(Icons.delete_outline_outlined, color: Colors.black),
+          onPressed: _clearNotifications, // Xóa tất cả thông báo
         ),
       ],
       backgroundColor: Colors.white,
@@ -84,22 +83,31 @@ class NotificationScreen extends StatelessWidget {
 
   // Danh sách thông báo
   Widget _buildNotificationList() {
+    if (notifications.isEmpty) {
+      return Center(
+        child: Text(
+          "No notifications available",
+          style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
     return ListView.builder(
       itemCount: notifications.length,
       itemBuilder: (context, index) {
-        return _buildNotificationItem(notifications[index]);
+        return _buildNotificationItem(notifications[index], index);
       },
     );
   }
 
   // Widget hiển thị từng thông báo
-  Widget _buildNotificationItem(NotificationModel notification) {
+  Widget _buildNotificationItem(NotificationModel notification, int index) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Ảnh sản phẩm
+          // Ảnh sản phẩm với kiểm tra lỗi
           Container(
             width: 60,
             height: 60,
@@ -107,7 +115,11 @@ class NotificationScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               color: Colors.grey[200],
             ),
-            child: Image.asset(notification.imageUrl, fit: BoxFit.cover),
+            child: Image.asset(
+              notification.imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Icon(Icons.image, color: Colors.grey),
+            ),
           ),
           SizedBox(width: 10),
 
@@ -118,10 +130,9 @@ class NotificationScreen extends StatelessWidget {
               children: [
                 Text(
                   notification.title,
-                  style: TextStyle(
+                  style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    fontFamily: GoogleFonts.poppins().fontFamily,
                     color: Colors.blue,
                   ),
                 ),
@@ -156,9 +167,29 @@ class NotificationScreen extends StatelessWidget {
             notification.timeAgo,
             style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
+
+          // Nút xóa từng thông báo
+          IconButton(
+            icon: Icon(Icons.close, size: 18, color: Colors.grey),
+            onPressed: () => _removeNotification(index),
+          ),
         ],
       ),
     );
+  }
+
+  // Xóa một thông báo
+  void _removeNotification(int index) {
+    setState(() {
+      notifications.removeAt(index);
+    });
+  }
+
+  // Xóa tất cả thông báo
+  void _clearNotifications() {
+    setState(() {
+      notifications.clear();
+    });
   }
 }
 
