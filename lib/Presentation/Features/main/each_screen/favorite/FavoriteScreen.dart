@@ -40,7 +40,7 @@ class FavoriteScreen extends StatelessWidget {
               ),
               itemCount: 8, // Số lượng sản phẩm yêu thích
               itemBuilder: (context, index) {
-                return ProductCard();
+                return ProductCard( islove: true,);
               },
             ),
         ),

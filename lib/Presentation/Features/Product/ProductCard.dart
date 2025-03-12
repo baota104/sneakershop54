@@ -2,14 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProductCard extends StatefulWidget {
-  const ProductCard({super.key});
+  final bool islove; // Không dùng dấu _ vì không cần private ở đây
+  const ProductCard({super.key, required this.islove});
 
   @override
   State<ProductCard> createState() => _ProductCardState();
 }
 
 class _ProductCardState extends State<ProductCard> {
-  bool _islove = false;
+  late bool islove; // Tạo một biến nội bộ để thay đổi trạng thái
+
+  @override
+  void initState() {
+    super.initState();
+    islove = widget.islove; // Gán giá trị ban đầu từ widget cha
+  }
+
+  void toggleLove() {
+    setState(() {
+      islove = !islove; // Cập nhật trạng thái trái tim
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -39,12 +52,10 @@ class _ProductCardState extends State<ProductCard> {
                 alignment: Alignment.topRight,
                 child: GestureDetector(
                   onTap: (){
-                    setState(() {
-                      _islove = !_islove;
-                    });
+                    toggleLove();
                   },
                   child: Container(
-                    child: _islove ? Icon(
+                    child: islove ? Icon(
                       Icons.favorite,
                       color:Colors.pink,
                       size: fontSize * 1.2,

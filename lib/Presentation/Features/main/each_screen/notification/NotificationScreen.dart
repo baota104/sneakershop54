@@ -9,7 +9,6 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  // Danh sách thông báo mẫu
   List<NotificationModel> notifications = [
     NotificationModel(
       imageUrl: "assets/images/onboard3.png",
@@ -32,33 +31,81 @@ class _NotificationScreenState extends State<NotificationScreen> {
       oldPrice: "\$500.00",
       newPrice: "\$350.00",
     ),
+    NotificationModel(
+      imageUrl: "assets/images/onboard3.png",
+      title: "Special Sale on Your Favorite Items",
+      timeAgo: "1 hour ago",
+      oldPrice: "\$500.00",
+      newPrice: "\$350.00",
+    ),
+    NotificationModel(
+      imageUrl: "assets/images/onboard3.png",
+      title: "Special Sale on Your Favorite Items",
+      timeAgo: "1 hour ago",
+      oldPrice: "\$500.00",
+      newPrice: "\$350.00",
+    ),
+    NotificationModel(
+      imageUrl: "assets/images/onboard3.png",
+      title: "Special Sale on Your Favorite Items",
+      timeAgo: "1 hour ago",
+      oldPrice: "\$500.00",
+      newPrice: "\$350.00",
+    ),
+    NotificationModel(
+      imageUrl: "assets/images/onboard3.png",
+      title: "Special Sale on Your Favorite Items",
+      timeAgo: "1 hour ago",
+      oldPrice: "\$500.00",
+      newPrice: "\$350.00",
+    ),
+    NotificationModel(
+      imageUrl: "assets/images/onboard3.png",
+      title: "Special Sale on Your Favorite Items",
+      timeAgo: "1 hour ago",
+      oldPrice: "\$500.00",
+      newPrice: "\$350.00",
+    ),
+    NotificationModel(
+      imageUrl: "assets/images/onboard3.png",
+      title: "Special Sale on Your Favorite Items",
+      timeAgo: "1 hour ago",
+      oldPrice: "\$500.00",
+      newPrice: "\$350.00",
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: _buildAppBar(),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: Container(
+        width: screenWidth,
+        height: screenHeight,
+        color: Color(0xFFF7F7F9),
+        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SizedBox(height: screenHeight * 0.02),
             Text(
               "Recent",
               style: GoogleFonts.poppins(
-                fontSize: 18,
+                fontSize: screenWidth * 0.05,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 10),
-            Expanded(child: _buildNotificationList()),
+            SizedBox(height: screenHeight * 0.01),
+            Expanded(child: _buildNotificationList(screenWidth, screenHeight)),
           ],
         ),
       ),
     );
   }
 
-  // AppBar của màn hình
   AppBar _buildAppBar() {
     return AppBar(
       title: Text(
@@ -71,23 +118,30 @@ class _NotificationScreenState extends State<NotificationScreen> {
       ),
       centerTitle: true,
       actions: [
-        IconButton(
-          icon: Icon(Icons.delete_outline_outlined, color: Colors.black),
-          onPressed: _clearNotifications, // Xóa tất cả thông báo
-        ),
+        GestureDetector(
+          onTap: () => _clearNotifications(),
+          child: Container(
+            margin: EdgeInsets.only(right: 10),
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: Icon(Icons.delete_outline_rounded, size: 30),
+          ),
+        )
       ],
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFFF7F7F9),
       elevation: 0,
     );
   }
 
-  // Danh sách thông báo
-  Widget _buildNotificationList() {
+  Widget _buildNotificationList(double screenWidth, double screenHeight) {
     if (notifications.isEmpty) {
       return Center(
         child: Text(
           "No notifications available",
-          style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey),
+          style: GoogleFonts.poppins(fontSize: screenWidth * 0.045, color: Colors.grey),
         ),
       );
     }
@@ -95,65 +149,69 @@ class _NotificationScreenState extends State<NotificationScreen> {
     return ListView.builder(
       itemCount: notifications.length,
       itemBuilder: (context, index) {
-        return _buildNotificationItem(notifications[index], index);
+        return _buildNotificationItem(notifications[index], index, screenWidth, screenHeight);
       },
     );
   }
 
-  // Widget hiển thị từng thông báo
-  Widget _buildNotificationItem(NotificationModel notification, int index) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+  Widget _buildNotificationItem(NotificationModel notification, int index, double screenWidth, double screenHeight) {
+    return Container(
+      width: screenWidth * 0.9,
+      margin: EdgeInsets.symmetric(vertical: screenHeight * 0.01),
+      padding: EdgeInsets.all(screenWidth * 0.03),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Ảnh sản phẩm với kiểm tra lỗi
           Container(
-            width: 60,
-            height: 60,
+            width: screenWidth * 0.2,
+            height: screenWidth * 0.2,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[200],
+              color: Color(0xFFF7F7F9),
             ),
             child: Image.asset(
               notification.imageUrl,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Icon(Icons.image, color: Colors.grey),
+              errorBuilder: (context, error, stackTrace) => Icon(Icons.image, color: Colors.grey, size: screenWidth * 0.1),
             ),
           ),
-          SizedBox(width: 10),
-
-          // Nội dung thông báo
+          SizedBox(width: screenWidth * 0.04),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   notification.title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
+                  style: GoogleFonts.raleway(
+                    fontSize: screenWidth * 0.04,
                     fontWeight: FontWeight.bold,
                     color: Colors.blue,
                   ),
                 ),
-                SizedBox(height: 4),
+                SizedBox(height: screenHeight * 0.005),
                 Row(
                   children: [
                     Text(
                       notification.oldPrice,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: screenWidth * 0.04,
                         color: Colors.black54,
                         decoration: TextDecoration.lineThrough,
+                        fontFamily: GoogleFonts.raleway().fontFamily,
                       ),
                     ),
-                    SizedBox(width: 8),
+                    SizedBox(width: screenWidth * 0.02),
                     Text(
                       notification.newPrice,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: screenWidth * 0.04,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
+                        fontFamily: GoogleFonts.raleway().fontFamily,
                       ),
                     ),
                   ],
@@ -161,31 +219,34 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ],
             ),
           ),
-
-          // Thời gian thông báo
-          Text(
-            notification.timeAgo,
-            style: TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-
-          // Nút xóa từng thông báo
-          IconButton(
-            icon: Icon(Icons.close, size: 18, color: Colors.grey),
-            onPressed: () => _removeNotification(index),
+          SizedBox(width: screenWidth * 0.02),
+          Column(
+            children: [
+              Text(
+                notification.timeAgo,
+                style: TextStyle(
+                  fontSize: screenWidth * 0.035,
+                  color: Colors.black,
+                  fontFamily: GoogleFonts.raleway().fontFamily,
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.close, size: screenWidth * 0.045, color: Color(0xFF707B81)),
+                onPressed: () => _removeNotification(index),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  // Xóa một thông báo
   void _removeNotification(int index) {
     setState(() {
       notifications.removeAt(index);
     });
   }
 
-  // Xóa tất cả thông báo
   void _clearNotifications() {
     setState(() {
       notifications.clear();
@@ -193,7 +254,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 }
 
-// Model thông báo
 class NotificationModel {
   final String imageUrl;
   final String title;

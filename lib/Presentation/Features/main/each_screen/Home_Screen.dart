@@ -250,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                   child: SizedBox(
                     width: cardWidth,
-                    child: ProductCard(),
+                    child: ProductCard(islove: false,),
                   ),
                 ),
               );

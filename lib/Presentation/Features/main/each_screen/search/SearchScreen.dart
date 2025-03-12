@@ -142,7 +142,7 @@ class _SearchscreenState extends State<Searchscreen> {
         ),
         itemCount: 8,
         itemBuilder: (context, index) {
-          return ProductCard();
+          return ProductCard(islove: false,);
         },
       ),
     );
