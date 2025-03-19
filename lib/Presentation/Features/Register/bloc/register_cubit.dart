@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:sneaker_shop/domains/authentication_repository/authentication_repository.dart';
+import 'package:sneaker_shop/domains/data_source/remote/authentication_repository/authentication_repository.dart';
 
 part 'register_state.dart';
 

@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:sneaker_shop/Presentation/Features/Login/RecoveryScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/Login/bloc/login_cubit.dart';
 import 'package:sneaker_shop/Presentation/Features/Register/RegisterScreen.dart';
-import 'package:sneaker_shop/domains/authentication_repository/authentication_repository.dart';
+import 'package:sneaker_shop/domains/data_source/remote/authentication_repository/authentication_repository.dart';
 
 class Loginscreen extends StatefulWidget {
   const Loginscreen({super.key, required this.isFirstTimeInstallApp});

@@ -29,21 +29,21 @@ class FavoriteScreen extends StatelessWidget {
         ],
       ),
       body: Container(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // Hiển thị 2 cột
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.75, // Tỷ lệ chiều cao / chiều rộng
-              ),
-              itemCount: 8, // Số lượng sản phẩm yêu thích
-              itemBuilder: (context, index) {
-                return ProductCard( islove: true,);
-              },
-            ),
-        ),
+        // child: Padding(
+        //   padding: const EdgeInsets.all(16.0),
+        //     child: GridView.builder(
+        //       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        //         crossAxisCount: 2, // Hiển thị 2 cột
+        //         crossAxisSpacing: 12,
+        //         mainAxisSpacing: 12,
+        //         childAspectRatio: 0.75, // Tỷ lệ chiều cao / chiều rộng
+        //       ),
+        //       itemCount: 8, // Số lượng sản phẩm yêu thích
+        //       itemBuilder: (context, index) {
+        //         return ProductCard( islove: true,);
+        //       },
+        //     ),
+        // ),
       ),
     );
   }

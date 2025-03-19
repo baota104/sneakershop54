@@ -6,13 +6,13 @@ import 'package:sneaker_shop/Presentation/Features/Login/bloc/login_cubit.dart';
 import 'package:sneaker_shop/Presentation/Features/Onboarding/Onboardingchildpage.dart';
 import 'package:sneaker_shop/Presentation/Features/Onboarding/Onboardingpageview.dart';
 import 'package:sneaker_shop/Presentation/Features/Register/RegisterScreen.dart';
-import 'package:sneaker_shop/Presentation/Features/main/MainScreen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/MainScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/splash/SplashScreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sneaker_shop/Presentation/Features/utils.enum/authentication_status.dart';
 import 'package:sneaker_shop/app/app_cubit.dart';
-import 'package:sneaker_shop/domains/authentication_repository/authentication_repository.dart';
-import 'package:sneaker_shop/domains/data_source/firebase_auth_service.dart';
+import 'package:sneaker_shop/domains/data_source/remote/authentication_repository/authentication_repository.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/firebase_auth_service.dart';
 import 'Presentation/Features/Register/bloc/register_cubit.dart';
 import 'firebase_options.dart';
 
@@ -21,7 +21,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
   runApp(const App());
 }
 class App extends StatefulWidget {
@@ -96,7 +95,7 @@ class _MyAppState extends State<MyApp> {
                   case AuthenticationStatus.authenticated:
                     _navigatorKey.currentState!.pushAndRemoveUntil(
                         MaterialPageRoute(
-                            builder: (context)=> const MainScreen()
+                            builder: (context)=> const MainScreen(navigatorpage: 0,)
                         ),
                         (route) => false,
                     );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../main/each_screen/MainScreen.dart';
+
 class CheckoutScreen extends StatefulWidget {
   final double totalCost;
   final double Subtotal;
@@ -254,9 +256,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pop(context);
-                    Navigator.pop(context);
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MainScreen(navigatorpage: 0)));
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,

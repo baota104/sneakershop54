@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:sneaker_shop/Presentation/Features/utils.enum/authentication_status.dart';
-import 'package:sneaker_shop/domains/authentication_repository/authentication_repository.dart';
+import 'package:sneaker_shop/domains/data_source/remote/authentication_repository/authentication_repository.dart';
 
 part 'app_state.dart';
 

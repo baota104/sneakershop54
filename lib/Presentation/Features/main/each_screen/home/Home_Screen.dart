@@ -1,12 +1,70 @@
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/CartScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductCard.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductDetail.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/Menu_Screen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/home/Home_product_bloc.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/product_firebase.dart';
+import 'package:sneaker_shop/domains/model/ProductModel.dart';
+import 'package:sneaker_shop/domains/repository/product_repository.dart';
+
+import '../../../../Widgets/LoadingWidget.dart';
+import 'Home_event.dart';
+import 'Home_state.dart';
+class HomeScreenContainer extends StatefulWidget {
+  const HomeScreenContainer({super.key});
+
+  @override
+  State<HomeScreenContainer> createState() => _HomeScreenContainerState();
+}
+
+class _HomeScreenContainerState extends State<HomeScreenContainer> {
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        Provider(create: (context) {
+          print("Productfirebase created");
+          return Productfirebase();
+        }),
+        ProxyProvider<Productfirebase, ProductRepository>(
+          create: (context) {
+            print("ProductRepository created");
+            return ProductRepository(context.read<Productfirebase>());
+          },
+          update: (context, product, repository) {
+            print("ProductRepository updated");
+            return ProductRepository(product);
+          },
+        ),
+        ProxyProvider<ProductRepository, HomeProductBloc>(
+          create: (context) {
+            print("HomeProductBloc created");
+            return HomeProductBloc(context.read<ProductRepository>());
+          },
+          update: (context, repository, bloc) {
+            print("HomeProductBloc updated");
+            return bloc ?? HomeProductBloc(repository);
+          },
+        ),
+      ],
+      child: Builder(
+        builder: (context) {
+          print("MultiProvider is built");
+          return HomeScreen();
+        },
+      ),
+    );
+  }
+}
 
 class HomeScreen extends StatefulWidget {
+
   const HomeScreen({super.key});
 
   @override
@@ -14,6 +72,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late HomeProductBloc bloc;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    bloc = context.read<HomeProductBloc>();
+    bloc.add(FetchListProduct()); // Gửi event sau khi widget đã được gắn vào cây widget
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,18 +143,68 @@ class _HomeScreenState extends State<HomeScreen> {
         drawer: Drawer(
           child: MenuScreen(),
         ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildnewarrive(),
-            SizedBox(height: 20,),
-            _buildProductList("Popular Shoes"),
-            SizedBox(height: 20,),
-            _buildProductList("Recommened for you")
-          ],
+      body:
+      SafeArea( child: Container(
+          child: BlocConsumer<HomeProductBloc, HomeStateBase>(
+            bloc: bloc,
+            listener: (context, state) {},
+            builder: (context, state) {
+              if (state is FetchListProductSuccess) {
+                return _buildhomescreen(state.listProduct);
+                // return ListView.builder(
+                //     itemCount: state.listProduct.length,
+                //     itemBuilder: (context, index) {
+                //       return ProductCard(product: state.listProduct[index]);
+                //     });
+              } else if (state is HomeStateLoading) {
+                return Center(child: LoadingWidet());
+              } else if (state is FetchListProductError) {
+                return Center(child: Text(state.message+"tai sao nhi"));
+              } else {
+                return SizedBox();
+              }
+            },
+          ),
+        //   child: StreamBuilder<QuerySnapshot>(
+        //       stream: FirebaseFirestore.instance.collection("Products").snapshots(),
+        //       builder: (context,snapshot){
+        //         List <Row> product = [];
+        //         if(snapshot.hasData){
+        //           final products = snapshot.data?.docs.reversed.toList();
+        //           for (var p in products!){
+        //              final producwidget = Row(
+        //                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //                children: [
+        //                  Text(p['name']),
+        //                  Text(p['brand']),
+        //                ],
+        //              );
+        //              product.add(producwidget);
+        //           }
+        //         }
+        //         return Expanded(
+        //           child: ListView(
+        //             children:product
+        //           ),
+        //         );
+        //       }
+        //   ),
         ),
-      ),
+       ),
         );
+  }
+  Widget _buildhomescreen(List<ProductModel> productmodel){
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildnewarrive(),
+          SizedBox(height: 20,),
+          _buildProductList("Popular Shoes",productmodel),
+          SizedBox(height: 20,),
+          _buildProductList("Recommened for you",productmodel)
+        ],
+      ),
+    );
   }
   Widget _buildnewarrive(){
     return Padding(
@@ -168,6 +285,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     "assets/images/onboard2.png", // Thay ảnh của bạn ở đây
                     height: 100,
                   ),
+                  // child: Transform(
+                  //   alignment: Alignment.center,
+                  //   transform: Matrix4.identity()..setEntry(1, 0, -0.3) ,
+                  //   child: Image.network(
+                  //     "https://2app.kicksonfire.com/kofapp/upload/events_master_images/ipad_nike-zoom-freak-1-roses.jpg",
+                  //     width: 120,
+                  //     height: 120,
+                  //   ),
+                  // ),
                 ),
                 Positioned(
                   right: 5,
@@ -200,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  Widget _buildProductList(String title){
+  Widget _buildProductList(String title,List<ProductModel> productmodel){
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       height: 230,
@@ -226,12 +352,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          _buildProductListItem(),
+          _buildProductListItem(productmodel),
         ],
       ),
     );
   }
-  Widget _buildProductListItem() {
+  Widget _buildProductListItem(List<ProductModel> productmodel) {
     return Container(
       height: 200, // Chiều cao danh sách sản phẩm
       child: LayoutBuilder(
@@ -240,17 +366,17 @@ class _HomeScreenState extends State<HomeScreen> {
           return ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: 16),
-            itemCount: 5,
+            itemCount: productmodel.length,
             itemBuilder: (context, index) {
               return Padding(
                 padding: const EdgeInsets.only(right: 12.0),
                 child: GestureDetector(
                   onTap: (){
-                    Navigator.push(context, MaterialPageRoute(builder:(context)=>ProductDetailScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder:(context)=>ProductDetailScreen(product: productmodel[index],)));
                   },
                   child: SizedBox(
                     width: cardWidth,
-                    child: ProductCard(islove: false,),
+                    child: ProductCard(product: productmodel[index],),
                   ),
                 ),
               );

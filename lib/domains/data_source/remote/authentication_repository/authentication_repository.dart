@@ -2,8 +2,8 @@
 import 'dart:async';
 
 import 'package:sneaker_shop/Presentation/Features/utils.enum/authentication_status.dart';
-import 'package:sneaker_shop/domains/authentication_repository/entities/user_entity.dart';
-import 'package:sneaker_shop/domains/data_source/firebase_auth_service.dart';
+import 'package:sneaker_shop/domains/data_source/remote/authentication_repository/entities/user_entity.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/firebase_auth_service.dart';
 
 abstract class AuthenticationRepository{
   //muon cac class khac truy cap

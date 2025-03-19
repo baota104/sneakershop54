@@ -3,7 +3,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductDetail.dart';
-import 'package:sneaker_shop/Presentation/Features/main/each_screen/Home_Screen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/home/Home_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/Menu_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/FavoriteScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification/NotificationScreen.dart';
@@ -11,7 +11,8 @@ import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/Prof
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/search/SearchScreen.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final navigatorpage;
+  const MainScreen({super.key, required this.navigatorpage});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -20,15 +21,13 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   List<Widget> _pages = [];
   int _currentPage = 0;
-
-  // late List<TaskModel> _listleft;
-  // late List<TaskModel> _listdone;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _currentPage = widget.navigatorpage;
     _pages = [
-      HomeScreen(),
+      HomeScreenContainer(),
       Searchscreen(),
       FavoriteScreen(),
       NotificationScreen(),

@@ -1,35 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
 class ProductCard extends StatefulWidget {
-  final bool islove; // Không dùng dấu _ vì không cần private ở đây
-  const ProductCard({super.key, required this.islove});
+  final ProductModel product; // Nhận ProductModel làm tham số
+
+  const ProductCard({super.key, required this.product});
 
   @override
   State<ProductCard> createState() => _ProductCardState();
 }
 
 class _ProductCardState extends State<ProductCard> {
-  late bool islove; // Tạo một biến nội bộ để thay đổi trạng thái
+  late bool isLoved; // Trạng thái yêu thích
 
   @override
   void initState() {
     super.initState();
-    islove = widget.islove; // Gán giá trị ban đầu từ widget cha
+    isLoved = widget.product.isloved; // Gán trạng thái từ product
   }
 
   void toggleLove() {
     setState(() {
-      islove = !islove; // Cập nhật trạng thái trái tim
+      isLoved = !isLoved;
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        double width = constraints.maxWidth * 0.9; // Giới hạn chiều rộng theo tỷ lệ
-        double imageSize = width * 0.8; // Kích thước ảnh giảm theo card
-        double fontSize = width * 0.1; // Kích thước chữ co giãn theo card
+        double width = constraints.maxWidth * 0.9;
+        double imageSize = width * 0.8;
+        double fontSize = width * 0.1;
 
         return Container(
           width: width,
@@ -48,66 +51,71 @@ class _ProductCardState extends State<ProductCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Nút yêu thích (heart icon)
               Align(
                 alignment: Alignment.topRight,
                 child: GestureDetector(
-                  onTap: (){
-                    toggleLove();
-                  },
-                  child: Container(
-                    child: islove ? Icon(
-                      Icons.favorite,
-                      color:Colors.pink,
-                      size: fontSize * 1.2,
-                    )
-                    :Icon(
-                      Icons.favorite_border,
-                      color:Colors.black,
-                      size: fontSize * 1.2,
-                    ),
+                  onTap: toggleLove,
+                  child: Icon(
+                    isLoved ? Icons.favorite : Icons.favorite_border,
+                    color: isLoved ? Colors.pink : Colors.black,
+                    size: fontSize * 1.2,
                   ),
                 ),
               ),
               SizedBox(height: 4),
+              // Ảnh sản phẩm
               Center(
-                child: Image.asset(
-                  "assets/images/onboard2.png",
+                child: Image.network(
+                  widget.product.imageUrl,
                   width: imageSize,
                   height: imageSize * 0.6,
-                  fit: BoxFit.contain,
+                  fit: BoxFit.fitWidth,
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    Icons.image_not_supported,
+                    size: imageSize * 0.5,
+                    color: Colors.grey,
+                  ),
                 ),
               ),
               SizedBox(height: 8),
-              Text(
-                "BEST SELLER",
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: fontSize * 0.8,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: GoogleFonts.poppins().fontFamily
+              // Nhãn sản phẩm (nếu có)
+              if (widget.product.activity.isNotEmpty)
+                Text(
+                  widget.product.activity.toUpperCase(),
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontSize: fontSize * 0.8,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: GoogleFonts.poppins().fontFamily,
+                  ),
                 ),
-              ),
               SizedBox(height: 4),
+              // Tên sản phẩm
               Text(
-                "Nike Jordan",
+                widget.product.name,
                 style: TextStyle(
                   fontSize: fontSize,
                   fontWeight: FontWeight.bold,
-                    fontFamily: GoogleFonts.raleway().fontFamily
+                  fontFamily: GoogleFonts.raleway().fontFamily,
                 ),
+                maxLines: 2, // Giới hạn số dòng hiển thị
+                overflow: TextOverflow.ellipsis, // Hiển thị "..." nếu bị tràn
               ),
-              SizedBox(height: 4),
+              Spacer(),
+              // Giá sản phẩm (hiển thị giá giảm nếu có)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "\$302.00",
-                    style: TextStyle(
-                      fontSize: fontSize * 1.1,
-                      fontWeight: FontWeight.bold,
-                        fontFamily: GoogleFonts.poppins().fontFamily
+                    Text(
+                      "\$${widget.product.price.toStringAsFixed(2)}",
+                      style: TextStyle(
+                        fontSize: fontSize * 1.1,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: GoogleFonts.poppins().fontFamily,
+                      ),
                     ),
-                  ),
+                  // Nút thêm vào giỏ hàng
                   Container(
                     padding: EdgeInsets.all(fontSize * 0.4),
                     decoration: BoxDecoration(

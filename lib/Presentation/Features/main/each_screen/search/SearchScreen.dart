@@ -37,9 +37,9 @@ class _SearchscreenState extends State<Searchscreen> {
               children: [
               _builsearchfield(),
                 _buildcategoryfield(),
-                Expanded(child:
-                _buildlistproduct()
-                )
+                // Expanded(child:
+                // _buildlistproduct()
+                // )
               ],
             ),
           )
@@ -130,22 +130,22 @@ class _SearchscreenState extends State<Searchscreen> {
       ),
     );
   }
-  Widget _buildlistproduct() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.75,
-        ),
-        itemCount: 8,
-        itemBuilder: (context, index) {
-          return ProductCard(islove: false,);
-        },
-      ),
-    );
-  }
+  // Widget _buildlistproduct() {
+  //   return Padding(
+  //     padding: const EdgeInsets.all(16.0),
+  //     child: GridView.builder(
+  //       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //         crossAxisCount: 2,
+  //         crossAxisSpacing: 12,
+  //         mainAxisSpacing: 12,
+  //         childAspectRatio: 0.75,
+  //       ),
+  //       itemCount: 8,
+  //       itemBuilder: (context, index) {
+  //         return ProductCard(islove: false,);
+  //       },
+  //     ),
+  //   );
+  // }
 
 }
