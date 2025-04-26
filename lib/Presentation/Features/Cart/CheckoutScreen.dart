@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main/each_screen/MainScreen.dart';
 
@@ -7,11 +9,13 @@ class CheckoutScreen extends StatefulWidget {
   final double totalCost;
   final double Subtotal;
   final double Delivery;
+  final double discount;
 
   CheckoutScreen({
     required this.totalCost,
     required this.Subtotal,
-    required this.Delivery
+    required this.Delivery,
+    required this.discount
   });
 
   @override
@@ -21,9 +25,51 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   bool isEditingEmail = false;
   bool isEditingPhone = false;
-
-  TextEditingController emailController = TextEditingController(text: "Baodeptrai@gmail.com");
+  String? userId;
+  Map<String, dynamic>? userData;
+  TextEditingController emailController = TextEditingController(text: "bao@gmail.com");
   TextEditingController phoneController = TextEditingController(text: "+084-113");
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+
+  }
+  /// Lấy UID từ SharedPreferences và truy vấn Firestore
+  Future<void> _loadUserData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? uid = prefs.getString('uid');
+
+    print("UID lấy từ SharedPreferences: $uid"); // Kiểm tra UID
+
+    if (uid != null) {
+      setState(() {
+        userId = uid;
+      });
+      try {
+        DocumentSnapshot userDoc =
+        await FirebaseFirestore.instance.collection("Users").doc(uid).get();
+
+        print("Dữ liệu lấy từ Firestore: ${userDoc.data()}"); // Kiểm tra dữ liệu lấy về
+
+        if (userDoc.exists) {
+          setState(() {
+            userData = userDoc.data() as Map<String, dynamic>;
+            emailController.text = userData?["email"] ?? "bao@gmail.com";
+            phoneController.text = userData?["phone"] ?? "+084-113";
+          });
+        } else {
+          print("Không tìm thấy user trong Firestore.");
+        }
+      } catch (e) {
+        print("Lỗi khi lấy dữ liệu từ Firestore: $e");
+      }
+    } else {
+      print("UID chưa được lưu hoặc bị null.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -139,7 +185,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         )),
         ListTile(
           leading: Icon(Icons.location_on_rounded, color: Colors.black, size: fontSize * 1.2),
-          title: Text("Nhan Chinh, Hanoi", style: TextStyle(fontSize: fontSize,
+          title: Text(userData!= null?userData!["address"]:"Nhan Chinh, Hanoi", style: TextStyle(fontSize: fontSize,
             fontFamily: GoogleFonts.poppins().fontFamily,
           )),
           subtitle: Text("View Map", style: TextStyle(color: Colors.grey, fontSize: fontSize * 0.9,
@@ -187,6 +233,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           _buildPriceRow("Subtotal", widget.Subtotal, screenWidth),
           _buildPriceRow("Delivery", widget.Delivery, screenWidth),
+          _buildPriceRow("Totaldiscount", widget.discount, screenWidth),
           Divider(thickness: 1, color: Colors.grey[300]),
           _buildPriceRow("Total Cost", widget.totalCost, screenWidth, isTotal: true),
           _buildCheckoutButton(screenWidth, screenHeight),
@@ -256,7 +303,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MainScreen(navigatorpage: 0)));
+                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>MainScreen(navigatorPage: 0)),
+                      ModalRoute.withName('/'),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,

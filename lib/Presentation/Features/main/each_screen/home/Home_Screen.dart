@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/CartScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductCard.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductDetail.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/MainScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/Menu_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/home/Home_product_bloc.dart';
 import 'package:sneaker_shop/domains/data_source/remote/firebase/product_firebase.dart';
@@ -16,52 +17,46 @@ import 'package:sneaker_shop/domains/repository/product_repository.dart';
 import '../../../../Widgets/LoadingWidget.dart';
 import 'Home_event.dart';
 import 'Home_state.dart';
-class HomeScreenContainer extends StatefulWidget {
-  const HomeScreenContainer({super.key});
-
-  @override
-  State<HomeScreenContainer> createState() => _HomeScreenContainerState();
-}
-
-class _HomeScreenContainerState extends State<HomeScreenContainer> {
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider(create: (context) {
-          print("Productfirebase created");
-          return Productfirebase();
-        }),
-        ProxyProvider<Productfirebase, ProductRepository>(
-          create: (context) {
-            print("ProductRepository created");
-            return ProductRepository(context.read<Productfirebase>());
-          },
-          update: (context, product, repository) {
-            print("ProductRepository updated");
-            return ProductRepository(product);
-          },
-        ),
-        ProxyProvider<ProductRepository, HomeProductBloc>(
-          create: (context) {
-            print("HomeProductBloc created");
-            return HomeProductBloc(context.read<ProductRepository>());
-          },
-          update: (context, repository, bloc) {
-            print("HomeProductBloc updated");
-            return bloc ?? HomeProductBloc(repository);
-          },
-        ),
-      ],
-      child: Builder(
-        builder: (context) {
-          print("MultiProvider is built");
-          return HomeScreen();
-        },
-      ),
-    );
-  }
-}
+// class HomeScreenContainer extends StatefulWidget {
+//   const HomeScreenContainer({super.key});
+//
+//   @override
+//   State<HomeScreenContainer> createState() => _HomeScreenContainerState();
+// }
+//
+// class _HomeScreenContainerState extends State<HomeScreenContainer> {
+//   @override
+//   Widget build(BuildContext context) {
+//     return MultiProvider(
+//       providers: [
+//         Provider(create: (context) {
+//           return Productfirebase();
+//         }),
+//         ProxyProvider<Productfirebase, ProductRepository>(
+//           create: (context) {
+//             return ProductRepository(context.read<Productfirebase>());
+//           },
+//           update: (context, product, repository) {
+//             return ProductRepository(product);
+//           },
+//         ),
+//         ProxyProvider<ProductRepository, HomeProductBloc>(
+//           create: (context) {
+//             return HomeProductBloc(context.read<ProductRepository>());
+//           },
+//           update: (context, repository, bloc) {
+//             return bloc ?? HomeProductBloc(repository);
+//           },
+//         ),
+//       ],
+//       child: Builder(
+//         builder: (context) {
+//           return HomeScreen();
+//         },
+//       ),
+//     );
+//   }
+// }
 
 class HomeScreen extends StatefulWidget {
 
@@ -75,8 +70,9 @@ class _HomeScreenState extends State<HomeScreen> {
   late HomeProductBloc bloc;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void initState() {
+    // TODO: implement initState
+    super.initState();
     bloc = context.read<HomeProductBloc>();
     bloc.add(FetchListProduct()); // Gửi event sau khi widget đã được gắn vào cây widget
   }
@@ -144,7 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: MenuScreen(),
         ),
       body:
-      SafeArea( child: Container(
+      SafeArea(
+        child: Container(
           child: BlocConsumer<HomeProductBloc, HomeStateBase>(
             bloc: bloc,
             listener: (context, state) {},
@@ -165,30 +162,6 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
           ),
-        //   child: StreamBuilder<QuerySnapshot>(
-        //       stream: FirebaseFirestore.instance.collection("Products").snapshots(),
-        //       builder: (context,snapshot){
-        //         List <Row> product = [];
-        //         if(snapshot.hasData){
-        //           final products = snapshot.data?.docs.reversed.toList();
-        //           for (var p in products!){
-        //              final producwidget = Row(
-        //                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //                children: [
-        //                  Text(p['name']),
-        //                  Text(p['brand']),
-        //                ],
-        //              );
-        //              product.add(producwidget);
-        //           }
-        //         }
-        //         return Expanded(
-        //           child: ListView(
-        //             children:product
-        //           ),
-        //         );
-        //       }
-        //   ),
         ),
        ),
         );
@@ -342,7 +315,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder:
+                  (context)=> MainScreen(navigatorPage: 1)
+                  ));
+                },
                 child: Text(
                   "See all",
                   style: TextStyle(color: Colors.blue, fontSize: 14,
@@ -366,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: 16),
-            itemCount: productmodel.length,
+            itemCount: 5,
             itemBuilder: (context, index) {
               return Padding(
                 padding: const EdgeInsets.only(right: 12.0),

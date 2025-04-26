@@ -7,9 +7,10 @@ class ProductModel {
   int stock;
   String activity;
   String description;
+  int status;
   String imageUrl;
   bool isloved;
-  List<int> size;
+  int size;
 
   ProductModel({
     required this.productId,
@@ -20,6 +21,7 @@ class ProductModel {
     required this.stock,
     required this.activity,
     required this.description,
+    required this.status,
     required this.imageUrl,
     required this.isloved,
     required this.size,
@@ -35,6 +37,7 @@ class ProductModel {
       "stock": stock,
       "activity":activity,
       "description": description,
+      "status":status,
       "imageUrl": imageUrl,
       "isloved": isloved,
       "size": size,
@@ -46,15 +49,17 @@ class ProductModel {
       productId: map["product_id"] ?? "", // Đảm bảo không bị null
       name: map["name"] ?? "Không có tên",
       brand: map["brand"] ?? "Không rõ thương hiệu",
-      price: (map["price"] as num).toDouble(), // Ép kiểu an toàn
+      price: (map["price"] ?? 0).toDouble(), // ✅ Tránh null
       discountPrice: map["discountPrice"] != null ? (map["discountPrice"] as num).toDouble() : null,
       stock: map["stock"] ?? 0,
       activity: map["activity"] ?? "",
       description: map["description"] ?? "",
+      status: (map["status"] ?? 0).toInt(), // ✅ Tránh null
       imageUrl: map["imageUrl"] ?? "",
       isloved: map["isloved"] ?? false,
-      size: (map["size"] as List<dynamic>).map((e) => e as int).toList(),
+      size: (map["size"] ?? 0).toInt(), // ✅ Tránh null
     );
   }
+
 
 }

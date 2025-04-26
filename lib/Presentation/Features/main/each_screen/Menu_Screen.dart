@@ -1,8 +1,10 @@
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/CartScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/MainScreen.dart';
 
@@ -96,17 +98,28 @@ class _MenuScreenState extends State<MenuScreen> {
   void _navigateToPage(String title) {
     Navigator.pop(context); // Đóng Drawer trước khi chuyển màn hình
     if (title == "Profile") {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(navigatorpage: 4)));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(navigatorPage: 4)));
     } else if (title == "My Cart") {
       Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen()));
     } else if (title == "Favorite") {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(navigatorpage: 2)));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(navigatorPage: 2)));
     } else if (title == "Orders") {
       // Thêm màn hình đơn hàng
     } else if (title == "Notifications") {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(navigatorpage: 3)));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(navigatorPage: 3)));
     } else if (title == "Settings") {
       // Thêm màn hình cài đặt
     }
+    else if(title == "Sign Out"){
+      logout();
+    }
+  }
+  Future<void> logout() async {
+    await FirebaseAuth.instance.signOut();
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('uid'); // Xóa UID khỏi SharedPreferences
+
+    print("Đã đăng xuất và xóa UID");
   }
 }

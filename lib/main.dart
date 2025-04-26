@@ -95,7 +95,7 @@ class _MyAppState extends State<MyApp> {
                   case AuthenticationStatus.authenticated:
                     _navigatorKey.currentState!.pushAndRemoveUntil(
                         MaterialPageRoute(
-                            builder: (context)=> const MainScreen(navigatorpage: 0,)
+                            builder: (context)=> const MainScreen(navigatorPage: 0)
                         ),
                         (route) => false,
                     );

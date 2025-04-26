@@ -1,35 +1,74 @@
-class CartItem {
-  String cartId;
-  String userId;
-  String productId;
-  int quantity;
-  DateTime addedAt;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-  CartItem({
-    required this.cartId,
-    required this.userId,
-    required this.productId,
-    required this.quantity,
-    required this.addedAt,
+class CartModel {
+  String cart_id;
+  String user_id;
+  List<CartItem> cart_items;
+
+  CartModel({
+    required this.cart_id,
+    required this.user_id,
+    required this.cart_items,
   });
+
+  factory CartModel.fromMap(Map<String, dynamic> map) {
+    return CartModel(
+      cart_id: map['cart_id'],
+      user_id: map['user_id'],
+      cart_items: List<CartItem>.from(
+        (map['cart_items'] as List).map((item) => CartItem.fromMap(item)),
+      ),
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
-      "cart_id": cartId,
-      "user_id": userId,
-      "product_id": productId,
-      "quantity": quantity,
-      "added_at": addedAt.toIso8601String(),
+      'cart_id': cart_id,
+      'user_id': user_id,
+      'cart_items': cart_items.map((item) => item.toMap()).toList(),
     };
   }
+}
+
+class CartItem {
+  String pro_id;
+  String imageUrl;
+  String name;
+  double price;
+  double discountprice;
+  DateTime addedAt;
+
+  CartItem({
+    required this.pro_id,
+    required this.imageUrl,
+    required this.name,
+    required this.price,
+    required this.discountprice,
+    required this.addedAt,
+  });
 
   factory CartItem.fromMap(Map<String, dynamic> map) {
     return CartItem(
-      cartId: map["cart_id"],
-      userId: map["user_id"],
-      productId: map["product_id"],
-      quantity: map["quantity"],
-      addedAt: DateTime.parse(map["added_at"]),
+      pro_id: map['pro_id'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      name: map['name'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+      discountprice: (map['discountprice'] ?? 0).toDouble(),
+      addedAt: map['date'] != null
+          ? (map['date'] as Timestamp).toDate()
+          : DateTime.now(), // fallback nếu không có
     );
+  }
+
+
+  Map<String, dynamic> toMap() {
+    return {
+      'pro_id':pro_id,
+      'imageUrl': imageUrl,
+      'name': name,
+      'price': price,
+      'discountprice': discountprice,
+      'addedAt': Timestamp.fromDate(addedAt),
+    };
   }
 }

@@ -1,6 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
+
+import '../../../domains/model/CartModel.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product; // Nhận ProductModel làm tham số
@@ -110,13 +114,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildCategory(double screenWidth) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20),
-      child: Text(
-        widget.product.activity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.product.activity,
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: screenWidth * 0.04,
+              fontFamily: GoogleFonts.raleway().fontFamily,
+            ),
+          ),
+      Text(
+        "Status : ${widget.product.status}% new",
         style: TextStyle(
           color: Colors.grey,
           fontSize: screenWidth * 0.04,
           fontFamily: GoogleFonts.raleway().fontFamily,
         ),
+      ), Text(
+            "Size : ${widget.product.size}",
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: screenWidth * 0.04,
+              fontFamily: GoogleFonts.raleway().fontFamily,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -220,7 +244,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
           // Nút "Add to Cart"
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              CartItem cart = CartItem(pro_id: widget.product.productId, imageUrl: widget.product.imageUrl, name: widget.product.name, price: widget.product.price, discountprice: widget.product.discountPrice!.toDouble(), addedAt: DateTime.now());
+              _addtocart(cart);
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
               shape: RoundedRectangleBorder(
@@ -232,5 +259,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ],
       ),
     );
+  }
+  void _addtocart(CartItem newItem) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? uid = prefs.getString('uid');
+    if (uid == null) return;
+
+    final cartRef = FirebaseFirestore.instance
+        .collection("Carts")
+        .doc(uid)
+        .collection("cart_items");
+
+    try {
+      // Check nếu sản phẩm đã có thì tăng số lượng (nếu bạn có field quantity)
+      QuerySnapshot existing = await cartRef
+          .where("pro_id", isEqualTo: newItem.pro_id)
+          .limit(1)
+          .get();
+
+      if (existing.docs.isNotEmpty) {
+        print("da co sanr pham roi");
+      } else {
+        await cartRef.add(newItem.toMap());
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("add to cart successfully"),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      print("❌ Lỗi khi thêm vào giỏ: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("fail to add to cart"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

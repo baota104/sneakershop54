@@ -2,6 +2,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductDetail.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/home/Home_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/Menu_Screen.dart';
@@ -10,15 +11,40 @@ import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/Profile_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/search/SearchScreen.dart';
 
-class MainScreen extends StatefulWidget {
-  final navigatorpage;
-  const MainScreen({super.key, required this.navigatorpage});
+import '../../../../domains/data_source/remote/firebase/product_firebase.dart';
+import '../../../../domains/repository/product_repository.dart';
+import 'home/Home_product_bloc.dart';
+class MainScreen extends StatelessWidget {
+  final int navigatorPage;
+
+  const MainScreen({super.key, required this.navigatorPage});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        Provider(create: (context) => Productfirebase()),
+        ProxyProvider<Productfirebase, ProductRepository>(
+          update: (context, productFirebase, _) => ProductRepository(productFirebase),
+        ),
+        ProxyProvider<ProductRepository, HomeProductBloc>(
+          update: (context, repository, _) => HomeProductBloc(repository),
+        ),
+      ],
+      child: MainScreenBody(navigatorpage: navigatorPage),
+    );
+  }
 }
 
-class _MainScreenState extends State<MainScreen> {
+class MainScreenBody extends StatefulWidget {
+  final navigatorpage;
+  const MainScreenBody({super.key, required this.navigatorpage});
+
+  @override
+  State<MainScreenBody> createState() => _MainScreenBodyState();
+}
+
+class _MainScreenBodyState extends State<MainScreenBody> {
   List<Widget> _pages = [];
   int _currentPage = 0;
   @override
@@ -27,7 +53,7 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _currentPage = widget.navigatorpage;
     _pages = [
-      HomeScreenContainer(),
+      HomeScreen(),
       Searchscreen(),
       FavoriteScreen(),
       NotificationScreen(),

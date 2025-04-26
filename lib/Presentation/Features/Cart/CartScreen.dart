@@ -1,7 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/CheckoutScreen.dart';
+import 'package:sneaker_shop/Presentation/Widgets/LoadingWidget.dart';
+
+import '../../../domains/model/CartModel.dart';
 
 class CartScreen extends StatefulWidget {
   @override
@@ -9,37 +14,122 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  List<CartItem> cartItems = [
-    CartItem(name: "Nike Club Max", price: 584.95, quantity: 1, imageUrl: "assets/images/onboard1.png"),
-    CartItem(name: "Nike Air Max 200", price: 94.05, quantity: 1, imageUrl: "assets/images/onboard2.png"),
-    CartItem(name: "Nike Air Max 270 Essential", price: 74.95, quantity: 1, imageUrl: "assets/images/onboard3.png"),
-    CartItem(name: "Nike Air Max 270 Essential", price: 74.95, quantity: 1, imageUrl: "assets/images/onboard3.png"),
-    CartItem(name: "Nike Air Max 270 Essential", price: 74.95, quantity: 1, imageUrl: "assets/images/onboard3.png"),
-  ];
 
-  double get subtotal => cartItems.fold(0, (sum, item) => sum + (item.price * item.quantity));
-  double deliveryFee = 60.20;
-  double get totalCost => subtotal + deliveryFee;
+   CartModel? _cartModel;
+   double _subtotal = 0.0;
+   double _deliveryFee = 0.0;
+   double _totaldiscount = 0.0;
 
-  void _increaseQuantity(int index) {
-    setState(() {
-      cartItems[index].quantity++;
-    });
-  }
+   double get _totalCost => _subtotal + _deliveryFee - _totaldiscount;
 
-  void _decreaseQuantity(int index) {
-    if (cartItems[index].quantity > 1) {
-      setState(() {
-        cartItems[index].quantity--;
-      });
+   void _removeItem(int index) async {
+     if (_cartModel == null) return;
+      print(_cartModel!.cart_items[index].pro_id);
+     try {
+       final itemToRemove = _cartModel!.cart_items[index];
+       final cartId = _cartModel!.cart_id;
+
+       // Tìm document cần xoá theo name (hoặc ID nếu có)
+       QuerySnapshot snapshot = await FirebaseFirestore.instance
+           .collection("Carts")
+           .doc(cartId)
+           .collection("cart_items")
+           .where("pro_id", isEqualTo: itemToRemove.pro_id) // bạn có thể dùng ID nếu item có ID riêng
+           .limit(1)
+           .get();
+
+       if (snapshot.docs.isNotEmpty) {
+         await snapshot.docs.first.reference.delete();
+       }
+       setState(() {
+         _cartModel!.cart_items.removeAt(index);
+         _recalculatePrices();
+       });
+     } catch (e) {
+       print("❌ Error when deleting cart item: $e");
+     }
+   }
+
+
+   void _recalculatePrices() {
+     double newSubtotal = 0.0;
+     double newdiscount = 0.0;
+     print(_cartModel.toString()+"nul me r");
+     if (_cartModel != null) {
+       for (var item in _cartModel!.cart_items) {
+         double price = item.price;
+         newdiscount += item.discountprice;
+         newSubtotal += price ;
+       }
+     }
+
+     double newDeliveryFee = newSubtotal >= 200 ? 0.0 : 15.0;
+    print(newSubtotal.toString());
+     setState(() {
+       _subtotal = newSubtotal;
+       _totaldiscount = newdiscount;
+       _deliveryFee = newDeliveryFee;
+     });
+   }
+  Future<CartModel?> fetchCartByUserId(String userid) async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection("Carts")
+          .where("user_id", isEqualTo: userid)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final doc = snapshot.docs.first;
+        final cartId = doc.id;
+        final data = doc.data() as Map<String, dynamic>;
+
+        // Fetch collection con: cart_items
+        QuerySnapshot cartItemsSnapshot = await FirebaseFirestore.instance
+            .collection("Carts")
+            .doc(cartId)
+            .collection("cart_items")
+            .get();
+
+        List<CartItem> cartItems = cartItemsSnapshot.docs.map((itemDoc) {
+          return CartItem.fromMap(itemDoc.data() as Map<String, dynamic>);
+        }).toList();
+
+        return CartModel(
+          cart_id: cartId,
+          user_id: data['user_id'],
+          cart_items: cartItems,
+        );
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print("❌ Lỗi khi fetch cart by userid: $e");
+      return null;
     }
   }
 
-  void _removeItem(int index) {
-    setState(() {
-      cartItems.removeAt(index);
-    });
+  @override
+  void initState() {
+    super.initState();
+    _initializeCart();
   }
+
+  Future<void> _initializeCart() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? uid = prefs.getString('uid');
+    print(uid);
+    if (uid != null) {
+      final cart = await fetchCartByUserId(uid);
+       setState(() {
+         _cartModel = cart;
+         print(cart.toString());
+       });
+      _recalculatePrices();// Gọi hàm async tách riêng ra
+      print("Fetched cart: $_cartModel");
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -77,11 +167,16 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildCartItemList(double screenWidth, double screenHeight) {
-    return Expanded(
+    if (_cartModel == null || _cartModel!.cart_items.isEmpty) {
+      return
+         LoadingWidet();
+
+    }
+     return Expanded(
       child: ListView.builder(
-        itemCount: cartItems.length,
+        itemCount: _cartModel!.cart_items.length,
         itemBuilder: (context, index) {
-          return _buildCartItem(cartItems[index], index, screenWidth, screenHeight);
+          return _buildCartItem(_cartModel!.cart_items[index], index, screenWidth, screenHeight);
         },
       ),
     );
@@ -100,21 +195,6 @@ class _CartScreenState extends State<CartScreen> {
             decoration: BoxDecoration(
               color: Colors.blue,
               borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.add, color: Colors.white, size: screenWidth * 0.06),
-                  onPressed: () => _increaseQuantity(index),
-                ),
-                Text("${item.quantity}",
-                    style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.045)),
-                IconButton(
-                  icon: Icon(Icons.remove, color: Colors.white, size: screenWidth * 0.06),
-                  onPressed: () => _decreaseQuantity(index),
-                ),
-              ],
             ),
           ),
         ],
@@ -149,26 +229,35 @@ class _CartScreenState extends State<CartScreen> {
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
                   color: Color(0xFFF7F7F9),
-                  child: Image.asset(item.imageUrl,
+                  child: Image.network(item.imageUrl,
                       width: screenWidth * 0.22,
                       height: screenWidth * 0.22,
-                      fit: BoxFit.cover),
+                      fit: BoxFit.contain),
                 ),
               ),
               SizedBox(width: screenWidth * 0.04),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.name,
-                      style: TextStyle(fontSize: screenWidth * 0.045, fontWeight: FontWeight.bold,
-                      fontFamily: GoogleFonts.raleway().fontFamily,
-                      )),
-                  SizedBox(height: screenHeight * 0.005),
-                  Text("\$${item.price.toStringAsFixed(2)}",
-                      style: TextStyle(fontSize: screenWidth * 0.04, color: Colors.grey,
-                        fontFamily: GoogleFonts.poppins().fontFamily,
-                      )),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.045,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: GoogleFonts.raleway().fontFamily,
+                      ),
+                    ),
+
+                    SizedBox(height: screenHeight * 0.005),
+                    Text("\$${item.price.toStringAsFixed(2)}",
+                        style: TextStyle(fontSize: screenWidth * 0.04, color: Colors.grey,
+                          fontFamily: GoogleFonts.poppins().fontFamily,
+                        )),
+                  ],
+                ),
               ),
             ],
           ),
@@ -184,10 +273,11 @@ class _CartScreenState extends State<CartScreen> {
         padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05, vertical: 10),
         child: Column(
           children: [
-            _buildPriceRow("Subtotal", subtotal, screenWidth),
-            _buildPriceRow("Delivery", deliveryFee, screenWidth),
+            _buildPriceRow("Subtotal", _subtotal, screenWidth),
+            _buildPriceRow("Totaldiscount", _totaldiscount, screenWidth),
+            _buildPriceRow("Delivery", _deliveryFee, screenWidth),
             Divider(thickness: 1, color: Colors.grey[300]),
-            _buildPriceRow("Total Cost", totalCost, screenWidth, isTotal: true),
+            _buildPriceRow("Total Cost", _totalCost, screenWidth, isTotal: true),
             _buildCheckoutButton(screenWidth, screenHeight)
           ],
         ),
@@ -220,7 +310,7 @@ class _CartScreenState extends State<CartScreen> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => CheckoutScreen(totalCost: totalCost, Subtotal: subtotal, Delivery: deliveryFee,)));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => CheckoutScreen(totalCost: _totalCost, Subtotal: _subtotal, Delivery: _deliveryFee, discount: _totaldiscount,)));
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF0D6EFD),
@@ -232,11 +322,4 @@ class _CartScreenState extends State<CartScreen> {
   }
 }
 
-class CartItem {
-  String name;
-  double price;
-  int quantity;
-  String imageUrl;
 
-  CartItem({required this.name, required this.price, required this.quantity, required this.imageUrl});
-}

@@ -1,6 +1,9 @@
 
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/utils.enum/authentication_status.dart';
 import 'package:sneaker_shop/domains/data_source/remote/authentication_repository/entities/user_entity.dart';
 import 'package:sneaker_shop/domains/data_source/remote/firebase/firebase_auth_service.dart';
@@ -24,6 +27,7 @@ abstract class AuthenticationRepository{
 }
 class AuthenticationRepositoryImpl extends AuthenticationRepository{
   final FirebaseAuthService firebaseAuthService;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final _statuscontroller = StreamController<AuthenticationStatus>();// de xac dinh da login hay chuaw
   final _usercontroller = StreamController<UserEntity>();
@@ -52,8 +56,20 @@ class AuthenticationRepositoryImpl extends AuthenticationRepository{
 
   }) async{
     try{
-     await firebaseAuthService.loginWithEmailAndPassword(email: email, password: password);
-     // login thanh cong thi thuc hien tiep theo o day
+      final userCredential = await firebaseAuthService.loginWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      if (userCredential.user != null) {
+        print("User ID: ${userCredential.user!.uid}");
+        // Lưu UID vào SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('uid',userCredential.user!.uid);
+        print("Lưu UID vào SharedPreferences thành công!");
+      }
+      else{
+        print("khong luu dược rồi em ạ");
+      }
     }
     catch(e){
       print(e.toString());
@@ -71,18 +87,32 @@ class AuthenticationRepositoryImpl extends AuthenticationRepository{
     yield* _usercontroller.stream;
   }
 
+  @override
   Future<void> registerWithEmailAndPassword({
     required String email,
-    required String password
-})async{
-    try{
-      await firebaseAuthService.registerWithEmailAndPassword(email: email, password: password);
-    }
-    catch(e){
+    required String password,
+  }) async {
+    try {
+      final user = await firebaseAuthService.registerWithEmailAndPassword(email: email, password: password);
 
+      if (user != null) {
+        await _firestore.collection("Users").doc(user.uid).set({
+          "uid": user.uid,
+          "email": user.email,
+          "name": "",  // Mặc định là chuỗi rỗng
+          "phone": "",  // Mặc định là chuỗi rỗng
+          "address": "",  // Mặc định là chuỗi rỗng
+          "password": password,  // Nếu cần lưu mật khẩu (không khuyến khích)
+          "createdAt": FieldValue.serverTimestamp(),
+        });
+        await FirebaseAuth.instance.signOut();
+        print("User registered and saved in Firestore!");
+      }
+    } catch (e) {
+      print("Error registering user: $e");
     }
-
   }
+
 
 
 }

@@ -1,10 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
+
+import '../../../domains/model/CartModel.dart';
 
 class ProductCard extends StatefulWidget {
   final ProductModel product; // Nhận ProductModel làm tham số
-
   const ProductCard({super.key, required this.product});
 
   @override
@@ -116,16 +119,22 @@ class _ProductCardState extends State<ProductCard> {
                       ),
                     ),
                   // Nút thêm vào giỏ hàng
-                  Container(
-                    padding: EdgeInsets.all(fontSize * 0.4),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: fontSize,
+                  GestureDetector(
+                    onTap: (){
+                      CartItem cart = CartItem(pro_id: widget.product.productId, imageUrl: widget.product.imageUrl, name: widget.product.name, price: widget.product.price, discountprice: widget.product.discountPrice!.toDouble(), addedAt: DateTime.now());
+                      _addtocart(cart);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(fontSize * 0.4),
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: fontSize,
+                      ),
                     ),
                   ),
                 ],
@@ -135,5 +144,44 @@ class _ProductCardState extends State<ProductCard> {
         );
       },
     );
+  }
+  void _addtocart(CartItem newItem) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? uid = prefs.getString('uid');
+    if (uid == null) return;
+
+    final cartRef = FirebaseFirestore.instance
+        .collection("Carts")
+        .doc(uid)
+        .collection("cart_items");
+
+    try {
+      // Check nếu sản phẩm đã có thì tăng số lượng (nếu bạn có field quantity)
+      QuerySnapshot existing = await cartRef
+          .where("pro_id", isEqualTo: newItem.pro_id)
+          .limit(1)
+          .get();
+
+      if (existing.docs.isNotEmpty) {
+        print("da co sanr pham roi");
+      } else {
+        await cartRef.add(newItem.toMap());
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("add to cart successfully"),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      print("❌ Lỗi khi thêm vào giỏ: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("fail to add to cart"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
