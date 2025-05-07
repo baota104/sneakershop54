@@ -3,6 +3,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductDetail.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/home/Home_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/Menu_Screen.dart';
@@ -10,6 +11,8 @@ import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/Fav
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification/NotificationScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/Profile_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/search/SearchScreen.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/cart_firebase.dart';
+import 'package:sneaker_shop/domains/repository/cart_repository.dart';
 
 import '../../../../domains/data_source/remote/firebase/product_firebase.dart';
 import '../../../../domains/repository/product_repository.dart';
@@ -24,11 +27,20 @@ class MainScreen extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider(create: (context) => Productfirebase()),
+        Provider(create: (context) => CartFirebase()),
         ProxyProvider<Productfirebase, ProductRepository>(
           update: (context, productFirebase, _) => ProductRepository(productFirebase),
         ),
+
         ProxyProvider<ProductRepository, HomeProductBloc>(
           update: (context, repository, _) => HomeProductBloc(repository),
+        ),
+
+        ProxyProvider<CartFirebase, CartRepository>(
+          update: (context, cartFirebase, _) => CartRepository(cartFirebase),
+        ),
+        ProxyProvider<CartRepository, CartBloc>(
+          update: (context, repository, _) => CartBloc(repository),
         ),
       ],
       child: MainScreenBody(navigatorpage: navigatorPage),
@@ -49,6 +61,7 @@ class _MainScreenBodyState extends State<MainScreenBody> {
   int _currentPage = 0;
   @override
   void initState() {
+
     // TODO: implement initState
     super.initState();
     _currentPage = widget.navigatorpage;

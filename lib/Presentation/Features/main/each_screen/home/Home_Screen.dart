@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/CartScreen.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_event.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductCard.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductDetail.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/MainScreen.dart';
@@ -14,7 +16,10 @@ import 'package:sneaker_shop/domains/data_source/remote/firebase/product_firebas
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
 import 'package:sneaker_shop/domains/repository/product_repository.dart';
 
+import '../../../../../domains/data_source/remote/firebase/cart_firebase.dart';
+import '../../../../../domains/repository/cart_repository.dart';
 import '../../../../Widgets/LoadingWidget.dart';
+import '../../../Cart/cart_state.dart';
 import 'Home_event.dart';
 import 'Home_state.dart';
 // class HomeScreenContainer extends StatefulWidget {
@@ -29,24 +34,12 @@ import 'Home_state.dart';
 //   Widget build(BuildContext context) {
 //     return MultiProvider(
 //       providers: [
-//         Provider(create: (context) {
-//           return Productfirebase();
-//         }),
-//         ProxyProvider<Productfirebase, ProductRepository>(
-//           create: (context) {
-//             return ProductRepository(context.read<Productfirebase>());
-//           },
-//           update: (context, product, repository) {
-//             return ProductRepository(product);
-//           },
+//         Provider(create: (context) => CartFirebase()),
+//         ProxyProvider<CartFirebase, CartRepository>(
+//           update: (context, cartFirebase, _) => CartRepository(cartFirebase),
 //         ),
-//         ProxyProvider<ProductRepository, HomeProductBloc>(
-//           create: (context) {
-//             return HomeProductBloc(context.read<ProductRepository>());
-//           },
-//           update: (context, repository, bloc) {
-//             return bloc ?? HomeProductBloc(repository);
-//           },
+//         ProxyProvider<CartRepository, CartBloc>(
+//           update: (context, repository, _) => CartBloc(repository),
 //         ),
 //       ],
 //       child: Builder(
@@ -68,12 +61,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late HomeProductBloc bloc;
+  late CartBloc cartBloc;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     bloc = context.read<HomeProductBloc>();
+    cartBloc = context.read<CartBloc>();
     bloc.add(FetchListProduct()); // Gửi event sau khi widget đã được gắn vào cây widget
   }
 
@@ -115,7 +110,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>CartScreen()));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                          builder: (context) => BlocProvider.value(
+                        value: cartBloc,
+                        child: CartScreen(),
+                      ),
+                      ),
+                      );
                     },
                     child: Image.asset("assets/images/bag-2.png", width: 26, height: 26),
                   ),
@@ -148,11 +151,6 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (context, state) {
               if (state is FetchListProductSuccess) {
                 return _buildhomescreen(state.listProduct);
-                // return ListView.builder(
-                //     itemCount: state.listProduct.length,
-                //     itemBuilder: (context, index) {
-                //       return ProductCard(product: state.listProduct[index]);
-                //     });
               } else if (state is HomeStateLoading) {
                 return Center(child: LoadingWidet());
               } else if (state is FetchListProductError) {
@@ -340,7 +338,23 @@ class _HomeScreenState extends State<HomeScreen> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           double cardWidth = constraints.maxWidth * 0.4; // Chiều rộng card tối đa 40% màn hình
-          return ListView.builder(
+          return BlocListener<CartBloc, CartState>(
+            listener: (context, state) {
+              print(state.status);
+              if (state.status == CartStatus.addSuccess) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("Đã thêm vào giỏ hàng"),
+                  backgroundColor: Colors.green,
+                ));
+              }
+              else if(state.status == CartStatus.failure){
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("Đã thêm vào giỏ hàng"),
+                  backgroundColor: Colors.green,
+                ));
+              }
+            },
+            child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: 16),
             itemCount: 5,
@@ -349,7 +363,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.only(right: 12.0),
                 child: GestureDetector(
                   onTap: (){
-                    Navigator.push(context, MaterialPageRoute(builder:(context)=>ProductDetailScreen(product: productmodel[index],)));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BlocProvider.value(
+                          value: cartBloc,
+                          child: ProductDetailScreen(product: productmodel[index],
+                        ),
+                      ),
+                    ));
                   },
                   child: SizedBox(
                     width: cardWidth,
@@ -358,7 +380,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             },
-          );
+          ),
+        );
         },
       ),
     );

@@ -19,8 +19,8 @@ class Productfirebase {
 
       return products;
     } catch (e, stacktrace) {
-      print("❌ Lỗi khi lấy danh sách sản phẩm: $e");
-      print("📌 Stacktrace: $stacktrace");
+      print(" Lỗi khi lấy danh sách sản phẩm: $e");
+      print(" Stacktrace: $stacktrace");
       throw Exception("Không thể lấy danh sách sản phẩm");
     }
   }

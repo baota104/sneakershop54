@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
 import '../../../../Widgets/LoadingWidget.dart';
@@ -21,11 +22,13 @@ class _SearchscreenState extends State<Searchscreen> {
   final List<String> _categories = ["All Shoes", "Daily", "Running", "Basketball", "Football"];
   int _selectedIndex = 0;
   late HomeProductBloc bloc;
+  late CartBloc cartBloc;
   List<ProductModel> _filteredProducts = [];
 
   @override
   void initState() {
     super.initState();
+    cartBloc = context.read<CartBloc>();
     bloc = context.read<HomeProductBloc>();
     bloc.add(FetchListProduct());
   }
@@ -200,7 +203,15 @@ class _SearchscreenState extends State<Searchscreen> {
         itemBuilder: (context, index) {
           return GestureDetector(
               onTap: (){
-                Navigator.push(context, MaterialPageRoute(builder:(context)=>ProductDetailScreen(product: _filteredProducts[index],)));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BlocProvider.value(
+                        value: cartBloc,
+                        child: ProductDetailScreen(product:_filteredProducts[index],
+                        ),
+                      ),
+                    ));
               },
               child: Container(
                   child: ProductCard(product: _filteredProducts[index])));

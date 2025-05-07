@@ -1,10 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_event.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
 import '../../../domains/model/CartModel.dart';
+import '../Cart/CartScreen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product; // Nhận ProductModel làm tham số
@@ -18,11 +22,13 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool isExpanded = false;
   late bool isLoved;
+  late CartBloc cartBloc;
 
   @override
   void initState() {
     super.initState();
     isLoved = widget.product.isloved; // Gán trạng thái ban đầu từ sản phẩm
+    cartBloc = context.read<CartBloc>();
   }
 
   void toggleLove() {
@@ -72,22 +78,37 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       centerTitle: true,
       actions: [
-        Padding(
-          padding: EdgeInsets.only(right: screenWidth * 0.04),
-          child: Stack(
-            children: [
-              Image.asset("assets/images/bag-2.png"),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: screenWidth * 0.02,
-                  height: screenWidth * 0.02,
-                  decoration:
-                  BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+        GestureDetector(
+          onTap: (){
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BlocProvider.value(
+                  value: cartBloc,
+                  child: CartScreen(),
                 ),
               ),
-            ],
+            );
+          },
+          child: Container(
+            child: Padding(
+              padding: EdgeInsets.only(right: screenWidth * 0.04),
+              child: Stack(
+                children: [
+                  Image.asset("assets/images/bag-2.png"),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: screenWidth * 0.02,
+                      height: screenWidth * 0.02,
+                      decoration:
+                      BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ],
@@ -245,8 +266,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           // Nút "Add to Cart"
           ElevatedButton(
             onPressed: () {
-              CartItem cart = CartItem(pro_id: widget.product.productId, imageUrl: widget.product.imageUrl, name: widget.product.name, price: widget.product.price, discountprice: widget.product.discountPrice!.toDouble(), addedAt: DateTime.now());
-              _addtocart(cart);
+             // CartItem cart = CartItem(pro_id: widget.product.productId, imageUrl: widget.product.imageUrl, name: widget.product.name, price: widget.product.price, discountprice: widget.product.discountPrice!.toDouble(), addedAt: DateTime.now());
+              cartBloc.add(AddItemtoCart(productId: widget.product.productId));
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
@@ -290,7 +311,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
       );
     } catch (e) {
-      print("❌ Lỗi khi thêm vào giỏ: $e");
+      print(" Lỗi khi thêm vào giỏ: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("fail to add to cart"),

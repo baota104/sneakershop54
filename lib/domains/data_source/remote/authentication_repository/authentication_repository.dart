@@ -3,7 +3,10 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sneaker_shop/Presentation/Features/Login/LoginScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/utils.enum/authentication_status.dart';
 import 'package:sneaker_shop/domains/data_source/remote/authentication_repository/entities/user_entity.dart';
 import 'package:sneaker_shop/domains/data_source/remote/firebase/firebase_auth_service.dart';
@@ -105,7 +108,6 @@ class AuthenticationRepositoryImpl extends AuthenticationRepository{
           "password": password,  // Nếu cần lưu mật khẩu (không khuyến khích)
           "createdAt": FieldValue.serverTimestamp(),
         });
-        await FirebaseAuth.instance.signOut();
         print("User registered and saved in Firestore!");
       }
     } catch (e) {

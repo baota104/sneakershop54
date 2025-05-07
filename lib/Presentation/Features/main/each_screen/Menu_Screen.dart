@@ -111,6 +111,7 @@ class _MenuScreenState extends State<MenuScreen> {
       // Thêm màn hình cài đặt
     }
     else if(title == "Sign Out"){
+
       logout();
     }
   }
@@ -119,7 +120,8 @@ class _MenuScreenState extends State<MenuScreen> {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('uid'); // Xóa UID khỏi SharedPreferences
-
+    // final result = prefs.setBool("kOnboardingCompleted",false);
+    // await prefs.remove("kOnboardingCompleted");
     print("Đã đăng xuất và xóa UID");
   }
 }

@@ -12,21 +12,21 @@ class FetchListProduct extends HomeEventBase{
 
 }
 
-class FetchTotalCart extends HomeEventBase{
-
-  FetchTotalCart();
-
-  @override
-  List<Object?> get props => [];
-
-}
-
-class AddToCart extends HomeEventBase{
-  late String productId;
-
-  AddToCart({required this.productId});
-
-  @override
-  List<Object?> get props => [productId];
-
-}
+// class FetchTotalCart extends HomeEventBase{
+//
+//   FetchTotalCart();
+//
+//   @override
+//   List<Object?> get props => [];
+//
+// }
+//
+// class AddToCart extends HomeEventBase{
+//   late String productId;
+//
+//   AddToCart({required this.productId});
+//
+//   @override
+//   List<Object?> get props => [productId];
+//
+// }

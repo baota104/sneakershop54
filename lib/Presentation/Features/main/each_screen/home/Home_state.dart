@@ -41,28 +41,3 @@ class FetchListProductError extends HomeStateBase{
 
 }
 
-// class FetchTotalSuccess extends HomeStateBase{
-//
-//   late OrderModel cartModel;
-//
-//   FetchTotalSuccess({required this.cartModel});
-//
-//   @override
-//   List<Object?> get props => [cartModel];
-//
-// }
-
-class FetchTotalError extends HomeStateBase{
-
-  late String message;
-  late int code;
-
-  FetchTotalError(String message , int code){
-    this.message = message;
-    this.code = code;
-  }
-
-  @override
-  List<Object?> get props => [message];
-
-}

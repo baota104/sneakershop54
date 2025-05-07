@@ -1,14 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/CheckoutScreen.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_event.dart';
 import 'package:sneaker_shop/Presentation/Widgets/LoadingWidget.dart';
 
 import '../../../domains/model/CartModel.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_state.dart';
 
 class CartScreen extends StatefulWidget {
+
   @override
   _CartScreenState createState() => _CartScreenState();
 }
@@ -19,36 +24,10 @@ class _CartScreenState extends State<CartScreen> {
    double _subtotal = 0.0;
    double _deliveryFee = 0.0;
    double _totaldiscount = 0.0;
+   late CartBloc cartBloc;
 
    double get _totalCost => _subtotal + _deliveryFee - _totaldiscount;
 
-   void _removeItem(int index) async {
-     if (_cartModel == null) return;
-      print(_cartModel!.cart_items[index].pro_id);
-     try {
-       final itemToRemove = _cartModel!.cart_items[index];
-       final cartId = _cartModel!.cart_id;
-
-       // Tìm document cần xoá theo name (hoặc ID nếu có)
-       QuerySnapshot snapshot = await FirebaseFirestore.instance
-           .collection("Carts")
-           .doc(cartId)
-           .collection("cart_items")
-           .where("pro_id", isEqualTo: itemToRemove.pro_id) // bạn có thể dùng ID nếu item có ID riêng
-           .limit(1)
-           .get();
-
-       if (snapshot.docs.isNotEmpty) {
-         await snapshot.docs.first.reference.delete();
-       }
-       setState(() {
-         _cartModel!.cart_items.removeAt(index);
-         _recalculatePrices();
-       });
-     } catch (e) {
-       print("❌ Error when deleting cart item: $e");
-     }
-   }
 
 
    void _recalculatePrices() {
@@ -62,73 +41,25 @@ class _CartScreenState extends State<CartScreen> {
          newSubtotal += price ;
        }
      }
-
      double newDeliveryFee = newSubtotal >= 200 ? 0.0 : 15.0;
-    print(newSubtotal.toString());
+     print(newSubtotal.toString());
      setState(() {
        _subtotal = newSubtotal;
        _totaldiscount = newdiscount;
        _deliveryFee = newDeliveryFee;
      });
    }
-  Future<CartModel?> fetchCartByUserId(String userid) async {
-    try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection("Carts")
-          .where("user_id", isEqualTo: userid)
-          .limit(1)
-          .get();
-
-      if (snapshot.docs.isNotEmpty) {
-        final doc = snapshot.docs.first;
-        final cartId = doc.id;
-        final data = doc.data() as Map<String, dynamic>;
-
-        // Fetch collection con: cart_items
-        QuerySnapshot cartItemsSnapshot = await FirebaseFirestore.instance
-            .collection("Carts")
-            .doc(cartId)
-            .collection("cart_items")
-            .get();
-
-        List<CartItem> cartItems = cartItemsSnapshot.docs.map((itemDoc) {
-          return CartItem.fromMap(itemDoc.data() as Map<String, dynamic>);
-        }).toList();
-
-        return CartModel(
-          cart_id: cartId,
-          user_id: data['user_id'],
-          cart_items: cartItems,
-        );
-      } else {
-        return null;
-      }
-    } catch (e) {
-      print("❌ Lỗi khi fetch cart by userid: $e");
-      return null;
-    }
-  }
 
   @override
   void initState() {
     super.initState();
-    _initializeCart();
+    cartBloc = context.read<CartBloc>();
+    cartBloc.add(FetchCart());
+    _recalculatePrices();
+    // _initializeCart();
   }
 
-  Future<void> _initializeCart() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? uid = prefs.getString('uid');
-    print(uid);
-    if (uid != null) {
-      final cart = await fetchCartByUserId(uid);
-       setState(() {
-         _cartModel = cart;
-         print(cart.toString());
-       });
-      _recalculatePrices();// Gọi hàm async tách riêng ra
-      print("Fetched cart: $_cartModel");
-    }
-  }
+
 
 
   @override
@@ -138,16 +69,48 @@ class _CartScreenState extends State<CartScreen> {
 
     return Scaffold(
       appBar: _buildAppBar(screenWidth),
-      body: Container(
+      body:Container(
         color: Color(0xFFF7F7F9),
-        child: Column(
-          children: [
-            _buildCartItemList(screenWidth, screenHeight),
-            _buildTotalCost(screenWidth,screenHeight),
-            // _buildCheckoutButton(screenWidth, screenHeight),
-          ],
+        constraints: BoxConstraints.expand(),
+        child: BlocConsumer<CartBloc,CartState>(
+          bloc: cartBloc,
+          listener: (context ,state) {
+            if (state.status == CartStatus.updateSuccess) {
+              cartBloc.add(FetchCart());
+            }
+            if (state.status == CartStatus.success && state.cartModel != null) {
+              setState(() {
+                _cartModel = state.cartModel;
+                _recalculatePrices(); // ✅ safe to call setState here
+              });
+              // if(state.status == CartStatus.confirmSuccess){
+              //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Dat hang thanh cong")));
+              //   Navigator.pop(context);
+              // }
+            }
+          },
+          builder: (context, state) {
+            print(state.status.toString());
+            if(state.status == CartStatus.success){
+              print("yess");
+              if(state.cartModel != null ){
+                _cartModel = state.cartModel;
+                return _buildCartScreen(screenWidth,screenHeight);
+              }else{
+                return Center(child: Text("Ban chua co san pham nao"));
+              }
+            }else if (state.status == CartStatus.failure){
+              return Center(child: Text(state.message!));
+            }else if (state.status == CartStatus.loading){
+              return Center(child: LoadingWidet());
+            }
+            return Container(
+              child:Text("ngu vai l")
+            );
+
+          },
         ),
-      ),
+    )
     );
   }
 
@@ -166,10 +129,19 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+   Widget _buildCartScreen(double screenWidth,double screenHeight){
+     return  Column(
+         children: [
+           _buildCartItemList(screenWidth, screenHeight),
+           _buildTotalCost(screenWidth,screenHeight),
+           // _buildCheckoutButton(screenWidth, screenHeight),
+         ],
+     );
+   }
   Widget _buildCartItemList(double screenWidth, double screenHeight) {
     if (_cartModel == null || _cartModel!.cart_items.isEmpty) {
       return
-         LoadingWidet();
+         Expanded(child: Center(child: Text("cart empty"),));
 
     }
      return Expanded(
@@ -212,7 +184,7 @@ class _CartScreenState extends State<CartScreen> {
             ),
             child: IconButton(
               icon: Icon(Icons.delete, color: Colors.white, size: screenWidth * 0.07),
-              onPressed: () => _removeItem(index),
+              onPressed: () => cartBloc.add(DeleteItemCart(productId: item.pro_id)),
             ),
           ),
         ],

@@ -37,17 +37,17 @@ class FirebaseAuthService {
         // Tạo giỏ hàng rỗng tương ứng
         await firestore.collection("Carts").doc(user.uid).set({
           "cart_id": user.uid,
-          "userid": user.uid,
+          "user_id": user.uid,
           // "cart_items": [],
         });
 
-        print("✅ Đăng ký + tạo giỏ hàng thành công cho user: ${user.email}");
+        print(" Đăng ký + tạo giỏ hàng thành công cho user: ${user.email}");
         return user;
       }
 
       return null;
     } catch (e) {
-      print("❌ Lỗi đăng ký hoặc tạo giỏ hàng: $e");
+      print(" Lỗi đăng ký hoặc tạo giỏ hàng: $e");
       return null;
     }
   }
