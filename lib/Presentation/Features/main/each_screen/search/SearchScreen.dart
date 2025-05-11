@@ -5,6 +5,7 @@ import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
 import '../../../../Widgets/LoadingWidget.dart';
+import '../../../Cart/cart_state.dart';
 import '../../../Product/ProductCard.dart';
 import '../../../Product/ProductDetail.dart';
 import '../home/Home_event.dart';
@@ -23,16 +24,110 @@ class _SearchscreenState extends State<Searchscreen> {
   int _selectedIndex = 0;
   late HomeProductBloc bloc;
   late CartBloc cartBloc;
+  List<ProductModel> _allproducts = [];
   List<ProductModel> _filteredProducts = [];
+  final TextEditingController _searchcontroller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     cartBloc = context.read<CartBloc>();
     bloc = context.read<HomeProductBloc>();
-    bloc.add(FetchListProduct());
+    _searchcontroller.addListener(_onSearchChanged);
   }
 
+  @override
+  void dispose() {
+    _searchcontroller.removeListener(_onSearchChanged);
+    _searchcontroller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    bloc.add(FetchListProduct());
+    super.didChangeDependencies();
+  }
+
+  void _onSearchChanged() {
+    _applyFilters();
+    setState(() {});
+    // if (_searchcontroller.text.isNotEmpty) {
+    //   _showSearchBottomSheet(context);
+    // } else {
+    //   Navigator.of(context).maybePop(); // Close BottomSheet if open
+    // }
+  }
+
+  void _applyFilters() {
+    List<ProductModel> filtered = _allproducts;
+
+    // Lọc theo category
+    if (_selectedIndex != 0) {
+      String selectedCategory = _categories[_selectedIndex];
+      filtered = filtered
+          .where((product) => product.activity.toLowerCase() == selectedCategory.toLowerCase())
+          .toList();
+    }
+
+    // Lọc theo từ khóa tìm kiếm
+    if (_searchcontroller.text.isNotEmpty) {
+      filtered = filtered
+          .where((product) =>
+          product.name.toLowerCase().contains(_searchcontroller.text.toLowerCase()))
+          .toList();
+    }
+
+    setState(() {
+      _filteredProducts = filtered;
+    });
+  }
+
+  void _showSearchBottomSheet(BuildContext contextchinh) {
+    showModalBottomSheet(
+      context: contextchinh,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      builder: (context) {
+        return BlocProvider.value(
+          value: cartBloc, // Truyền bloc đúng
+          child: SafeArea(
+            child: Container(
+              padding: EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height * 0.75,
+              child: _filteredProducts.isEmpty
+                  ? Center(child: Text("Không tìm thấy sản phẩm"))
+                  : GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.75,
+                ),
+                itemCount: _filteredProducts.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        contextchinh,
+                        MaterialPageRoute(
+                          builder: (context) => BlocProvider.value(
+                            value: cartBloc,
+                            child: ProductDetailScreen(product: _filteredProducts[index]),
+                          ),
+                        ),
+                      );
+                    },
+                    child: ProductCard(product: _filteredProducts[index]),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,6 +150,7 @@ class _SearchscreenState extends State<Searchscreen> {
         bloc: bloc,
         listener: (context, state) {
           if (state is FetchListProductSuccess) {
+            _allproducts = state.listProduct;
             _filterProducts(state.listProduct);
           }
         },
@@ -89,6 +185,7 @@ class _SearchscreenState extends State<Searchscreen> {
   }
 
   Widget _buildSearchScreen() {
+    bool isSearching = _searchcontroller.text.isNotEmpty;
     return SafeArea(
       child: Container(
         constraints: BoxConstraints.expand(),
@@ -96,8 +193,23 @@ class _SearchscreenState extends State<Searchscreen> {
         child: Column(
           children: [
             _buildSearchField(),
-            _buildCategoryField(),
-            Expanded(child: _buildListProduct()),
+            if (!isSearching) ...[
+              _buildCategoryField(),
+              Expanded(child: _buildListProduct()),
+            ] else ...[
+              Expanded(child: _buildSearchResultsContainer()),
+              // TextButton(
+              //   onPressed: () {
+              //     _searchcontroller.clear();
+              //     FocusScope.of(context).unfocus(); // đóng bàn phím
+              //     setState(() {}); // cập nhật lại trạng thái
+              //   },
+              //   child: Text(
+              //     "Cancel",
+              //     style: TextStyle(color: Colors.blue),
+              //   ),
+              // ),
+            ],
           ],
         ),
       ),
@@ -107,13 +219,24 @@ class _SearchscreenState extends State<Searchscreen> {
   Widget _buildSearchField() {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-      child: TextFormField(
+      child: TextField(
+        onChanged: (value) {
+          _onSearchChanged();// Cập nhật kết quả
+        },
+        onSubmitted: (value) {
+         _buildSearchResultsContainer();
+        },
+        controller: _searchcontroller,
         style: TextStyle(color: Colors.black),
         decoration: InputDecoration(
           prefixIcon: Icon(Icons.search),
           suffixIcon: IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.mic),
+            onPressed: () {
+              setState(() {
+                _searchcontroller.clear();
+              });
+            },
+            icon: Icon(Icons.cancel),
           ),
           fillColor: Colors.white,
           filled: true,
@@ -190,7 +313,23 @@ class _SearchscreenState extends State<Searchscreen> {
   }
 
   Widget _buildListProduct() {
-    return Padding(
+    return BlocListener<CartBloc, CartState>(
+        listener: (context, state) {
+          print(state.status);
+          if (state.status == CartStatus.addSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text("Đã thêm vào giỏ hàng"),
+              backgroundColor: Colors.green,
+            ));
+          }
+          else if (state.status == CartStatus.failure) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text("Đã thêm vào giỏ hàng"),
+              backgroundColor: Colors.green,
+            ));
+          }
+        },
+    child: Padding(
       padding: const EdgeInsets.all(16.0),
       child: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -217,6 +356,38 @@ class _SearchscreenState extends State<Searchscreen> {
                   child: ProductCard(product: _filteredProducts[index])));
         },
       ),
+    ),
     );
   }
+  Widget _buildSearchResultsContainer() {
+    return _filteredProducts.isEmpty
+        ? Center(child: Text("Không tìm thấy sản phẩm"))
+        : GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.75,
+      ),
+      itemCount: _filteredProducts.length,
+      itemBuilder: (context, index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BlocProvider.value(
+                  value: cartBloc,
+                  child: ProductDetailScreen(product: _filteredProducts[index]),
+                ),
+              ),
+            );
+          },
+          child: ProductCard(product: _filteredProducts[index]),
+        );
+      },
+    );
+  }
+
 }

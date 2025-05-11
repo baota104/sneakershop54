@@ -69,7 +69,7 @@ class _MainScreenBodyState extends State<MainScreenBody> {
       HomeScreen(),
       Searchscreen(),
       FavoriteScreen(),
-      NotificationScreen(),
+      NotificationscreenContainer(),
      ProfileScreen()
     ];
   }

@@ -1,5 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification/Notification_bloc.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification/Notification_event.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification/Notification_state.dart';
+import 'package:sneaker_shop/Presentation/Widgets/LoadingWidget.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/notifycation_firebase.dart';
+import 'package:sneaker_shop/domains/repository/notifycation_repository.dart';
+
+import '../../../../../domains/model/NotificationModel.dart';
+class NotificationscreenContainer extends StatelessWidget {
+  const NotificationscreenContainer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        Provider(create: (context) => NotificationFirebase()),
+        ProxyProvider<NotificationFirebase, NotificationRepository>(
+          update: (context, notiFirebase, _) => NotificationRepository(notiFirebase),
+        ),
+        ProxyProvider<NotificationRepository, NotificationBloc>(
+          update: (context, repository, _) => NotificationBloc(repository),
+        ),
+      ],
+      child: NotificationScreen(),
+    );
+  }
+}
 
 class NotificationScreen extends StatefulWidget {
   NotificationScreen({super.key});
@@ -9,71 +38,15 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  List<NotificationModel> notifications = [
-    NotificationModel(
-      imageUrl: "assets/images/onboard3.png",
-      title: "We Have New Products With Offers",
-      timeAgo: "7 min ago",
-      oldPrice: "\$364.95",
-      newPrice: "\$260.00",
-    ),
-    NotificationModel(
-      imageUrl: "assets/images/onboard3.png",
-      title: "Limited Time Offer Just for You",
-      timeAgo: "40 min ago",
-      oldPrice: "\$250.00",
-      newPrice: "\$199.00",
-    ),
-    NotificationModel(
-      imageUrl: "assets/images/onboard3.png",
-      title: "Special Sale on Your Favorite Items",
-      timeAgo: "1 hour ago",
-      oldPrice: "\$500.00",
-      newPrice: "\$350.00",
-    ),
-    NotificationModel(
-      imageUrl: "assets/images/onboard3.png",
-      title: "Special Sale on Your Favorite Items",
-      timeAgo: "1 hour ago",
-      oldPrice: "\$500.00",
-      newPrice: "\$350.00",
-    ),
-    NotificationModel(
-      imageUrl: "assets/images/onboard3.png",
-      title: "Special Sale on Your Favorite Items",
-      timeAgo: "1 hour ago",
-      oldPrice: "\$500.00",
-      newPrice: "\$350.00",
-    ),
-    NotificationModel(
-      imageUrl: "assets/images/onboard3.png",
-      title: "Special Sale on Your Favorite Items",
-      timeAgo: "1 hour ago",
-      oldPrice: "\$500.00",
-      newPrice: "\$350.00",
-    ),
-    NotificationModel(
-      imageUrl: "assets/images/onboard3.png",
-      title: "Special Sale on Your Favorite Items",
-      timeAgo: "1 hour ago",
-      oldPrice: "\$500.00",
-      newPrice: "\$350.00",
-    ),
-    NotificationModel(
-      imageUrl: "assets/images/onboard3.png",
-      title: "Special Sale on Your Favorite Items",
-      timeAgo: "1 hour ago",
-      oldPrice: "\$500.00",
-      newPrice: "\$350.00",
-    ),
-    NotificationModel(
-      imageUrl: "assets/images/onboard3.png",
-      title: "Special Sale on Your Favorite Items",
-      timeAgo: "1 hour ago",
-      oldPrice: "\$500.00",
-      newPrice: "\$350.00",
-    ),
-  ];
+  late NotificationBloc notibloc;
+  late List<NotificationModel> notifications;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    notibloc = context.read<NotificationBloc>();
+    notibloc.add(FetchListNotification());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,27 +55,29 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     return Scaffold(
       appBar: _buildAppBar(),
-      body: Container(
-        width: screenWidth,
-        height: screenHeight,
-        color: Color(0xFFF7F7F9),
-        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: screenHeight * 0.02),
-            Text(
-              "Recent",
-              style: GoogleFonts.poppins(
-                fontSize: screenWidth * 0.05,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.01),
-            Expanded(child: _buildNotificationList(screenWidth, screenHeight)),
-          ],
-        ),
-      ),
+      body: BlocConsumer<NotificationBloc, NotiStateBase>(
+        bloc: notibloc,
+        listener: (context, state) {
+        if(state is FetchListNotiSuccess){
+          notifications = state.listNotification;
+        }
+        if (state is DeletenotificationSuccess) {
+          notibloc.add(FetchListNotification());
+        }
+      },
+  builder: (context, state) {
+    if(state is NotiStateLoading){
+      return Center(child: LoadingWidet());
+    }
+    else if(state is FetchListNotiSuccess){
+      return _buildNotificationList(screenWidth, screenHeight);
+    }
+    else{
+      print("fetch noti error");
+    }
+   return Container();
+  },
+),
     );
   }
 
@@ -173,60 +148,31 @@ class _NotificationScreenState extends State<NotificationScreen> {
               borderRadius: BorderRadius.circular(8),
               color: Color(0xFFF7F7F9),
             ),
-            child: Image.asset(
+            child: Image.network(
               notification.imageUrl,
-              fit: BoxFit.cover,
+              fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => Icon(Icons.image, color: Colors.grey, size: screenWidth * 0.1),
             ),
           ),
           SizedBox(width: screenWidth * 0.04),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  notification.title,
+                child:Text(
+                  notification.message,
                   style: GoogleFonts.raleway(
                     fontSize: screenWidth * 0.04,
                     fontWeight: FontWeight.bold,
                     color: Colors.blue,
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.005),
-                Row(
-                  children: [
-                    Text(
-                      notification.oldPrice,
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        color: Colors.black54,
-                        decoration: TextDecoration.lineThrough,
-                        fontFamily: GoogleFonts.raleway().fontFamily,
-                      ),
-                    ),
-                    SizedBox(width: screenWidth * 0.02),
-                    Text(
-                      notification.newPrice,
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                        fontFamily: GoogleFonts.raleway().fontFamily,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
           ),
           SizedBox(width: screenWidth * 0.02),
           Column(
             children: [
               Text(
-                notification.timeAgo,
+                timeAgo(notification.time),
                 style: TextStyle(
-                  fontSize: screenWidth * 0.035,
-                  color: Colors.black,
+                  fontSize: screenWidth * 0.04,
+                  color: Colors.black54,
                   fontFamily: GoogleFonts.raleway().fontFamily,
                 ),
               ),
@@ -235,37 +181,48 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 onPressed: () => _removeNotification(index),
               ),
             ],
-          ),
+          )
         ],
       ),
     );
   }
+  String timeAgo(DateTime notificationTime) {
+    final now = DateTime.now();
+    final difference = now.difference(notificationTime);
 
-  void _removeNotification(int index) {
-    setState(() {
-      notifications.removeAt(index);
-    });
+    if (difference.inDays > 0) {
+      return '${difference.inDays} days ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hours ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minute ago';
+    } else {
+      return 'now';
+    }
   }
 
-  void _clearNotifications() {
+  void _removeNotification(int index) {
+    final id = notifications[index].notificationId;
+    if(id.isNotEmpty){
+      setState(() {
+        notifications.removeAt(index);
+      });
+      notibloc.add(DeleteNotification(id));
+    }
+    else{
+      print("id rỗng");
+    }
+  }
+
+  void _clearNotifications() async {
+    for (var notification in notifications) {
+      notibloc.add(DeleteNotification(notification.notificationId));
+    }
     setState(() {
       notifications.clear();
     });
   }
+
 }
 
-class NotificationModel {
-  final String imageUrl;
-  final String title;
-  final String timeAgo;
-  final String oldPrice;
-  final String newPrice;
 
-  NotificationModel({
-    required this.imageUrl,
-    required this.title,
-    required this.timeAgo,
-    required this.oldPrice,
-    required this.newPrice,
-  });
-}

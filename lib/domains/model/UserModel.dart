@@ -5,7 +5,7 @@ class UserModel {
   String password;
   String phone;
   String address;
-  List<Favoritesitems> fav;
+  List<String> fav;
   DateTime createdAt;
 
   UserModel({
@@ -27,26 +27,28 @@ class UserModel {
       "password": password,
       "phone": phone,
       "address": address,
-      "fav": fav.map((e) => e.toMap()).toList(),
+      "favorite":fav,
       "created_at": createdAt.toIso8601String(),
     };
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      userId: map["user_id"],
-      name: map["name"],
-      email: map["email"],
-      password: map["password"],
-      phone: map["phone"],
-      address: map["address"],
-      fav: List<Favoritesitems>.from(
-        (map['cart_items'] as List).map((item) => Favoritesitems.fromMap(item)),
-      ),
-      createdAt: DateTime.parse(map["created_at"]),
+      userId: map["user_id"] ?? '',
+      name: map["name"] ?? '',
+      email: map["email"] ?? '',
+      password: map["password"] ?? '',
+      phone: map["phone"] ?? '',
+      address: map["address"] ?? '',
+      fav: List<String>.from(map["favorite"] ?? []),
+      createdAt: map["created_at"] != null
+          ? DateTime.parse(map["created_at"])
+          : DateTime.now(),
     );
   }
+
 }
+
 
 class Favoritesitems {
   String pro_id;

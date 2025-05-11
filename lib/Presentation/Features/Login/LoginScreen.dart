@@ -20,6 +20,7 @@ class _LoginscreenState extends State<Loginscreen> {
   bool isvisibleicon = true;
   var _emailController = TextEditingController();
   var _passController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -58,17 +59,20 @@ class _LoginscreenState extends State<Loginscreen> {
               minHeight:double.minPositive
             ),
               child: IntrinsicHeight(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                  _buildtitleandcontent(),
-                  _buildemailfield(),
-                  _buildpasswordfield(),
-                  _buildsigninbutton(),
-                  _buildgoogle(),
-                  _buildtextregister()
-                  ],
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                    _buildtitleandcontent(),
+                    _buildemailfield(),
+                    _buildpasswordfield(),
+                    _buildsigninbutton(),
+                    _buildgoogle(),
+                    _buildtextregister()
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -111,7 +115,7 @@ class _LoginscreenState extends State<Loginscreen> {
   Widget _buildemailfield(){
     return Container(
       margin: EdgeInsets.symmetric(vertical: 30,horizontal: 20),
-        height: 80,
+        height: 100,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -139,7 +143,7 @@ class _LoginscreenState extends State<Loginscreen> {
                     r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
                     .hasMatch(value);
                 if (emailValid) {
-                  return null; // email hop le
+                  return null;
                 }
                 else {
                   return "email is not invalidate";
@@ -276,7 +280,7 @@ class _LoginscreenState extends State<Loginscreen> {
       margin: EdgeInsets.symmetric(horizontal: 20,vertical: 24),
       width: double.infinity,
       child: ElevatedButton(onPressed: () {
-        // _onhandleloginsubmit();
+        _onhandleloginsubmitgoogle();
       }, style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xF7F7F9).withOpacity(0.9),
           shape: RoundedRectangleBorder(
@@ -339,13 +343,29 @@ class _LoginscreenState extends State<Loginscreen> {
       ),
     );
   }
-  void _onhandleloginsubmit(){
+  Future<void> _onhandleloginsubmit () async {
+    if (!_formKey.currentState!.validate()) {
+      return; // Nếu form không hợp lệ, không làm gì cả
+    }
     final logincubit = context.read<LoginCubit>();
     var email = _emailController.text;
     var password = _passController.text;
     try{
-      logincubit.login(email, password);
-      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> MainPage()));
+       await logincubit.login(email, password);
+    }
+    catch(e){
+      print(e.toString());
+    }
+    return;
+  }
+  Future<void> _onhandleloginsubmitgoogle () async {
+
+    final logincubit = context.read<LoginCubit>();
+
+    try{
+      final success = await logincubit.loginWithGoogle();
+      final message = success ? "Đăng nhập Google thành công!" : "Đăng nhập Google thất bại.";
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     }
     catch(e){
       print(e.toString());

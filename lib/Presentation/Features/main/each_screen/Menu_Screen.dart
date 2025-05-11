@@ -3,10 +3,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/CartScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/MainScreen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/order/orderscreen.dart';
+import 'package:sneaker_shop/domains/model/UserModel.dart';
+
+import '../../Cart/cart_bloc.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -16,6 +21,15 @@ class MenuScreen extends StatefulWidget {
 }
 
 class _MenuScreenState extends State<MenuScreen> {
+  late CartBloc cartBloc;
+  late UserModel userModel;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    cartBloc = context.read<CartBloc>();
+
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,11 +114,19 @@ class _MenuScreenState extends State<MenuScreen> {
     if (title == "Profile") {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(navigatorPage: 4)));
     } else if (title == "My Cart") {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BlocProvider.value(
+            value: cartBloc,
+            child: CartScreen(),
+          ),
+        ),
+      );
     } else if (title == "Favorite") {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(navigatorPage: 2)));
     } else if (title == "Orders") {
-      // Thêm màn hình đơn hàng
+      Navigator.push(context, MaterialPageRoute(builder: (context) => OrderscreenContainer()));
     } else if (title == "Notifications") {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(navigatorPage: 3)));
     } else if (title == "Settings") {

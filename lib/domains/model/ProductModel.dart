@@ -49,15 +49,15 @@ class ProductModel {
       productId: map["product_id"] ?? "", // Đảm bảo không bị null
       name: map["name"] ?? "Không có tên",
       brand: map["brand"] ?? "Không rõ thương hiệu",
-      price: (map["price"] ?? 0).toDouble(), // ✅ Tránh null
+      price: (map["price"] ?? 0).toDouble(), //
       discountPrice: map["discountPrice"] != null ? (map["discountPrice"] as num).toDouble() : null,
       stock: map["stock"] ?? 0,
       activity: map["activity"] ?? "",
       description: map["description"] ?? "",
-      status: (map["status"] ?? 0).toInt(), // ✅ Tránh null
+      status: (map["status"] ?? 0).toInt(),
       imageUrl: map["imageUrl"] ?? "",
       isloved: map["isloved"] ?? false,
-      size: (map["size"] ?? 0).toInt(), // ✅ Tránh null
+      size: (map["size"] ?? 0).toInt(),
     );
   }
 

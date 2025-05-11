@@ -35,6 +35,7 @@ class CartItem {
   String imageUrl;
   String name;
   double price;
+  int stock;
   double discountprice;
   DateTime addedAt;
 
@@ -43,6 +44,7 @@ class CartItem {
     required this.imageUrl,
     required this.name,
     required this.price,
+    required this.stock,
     required this.discountprice,
     required this.addedAt,
   });
@@ -53,6 +55,7 @@ class CartItem {
       imageUrl: map['imageUrl'] ?? '',
       name: map['name'] ?? '',
       price: (map['price'] ?? 0).toDouble(),
+      stock: map['stock'] ?? 0,
       discountprice: (map['discountprice'] ?? 0).toDouble(),
       addedAt: map['date'] != null
           ? (map['date'] as Timestamp).toDate()
@@ -67,6 +70,7 @@ class CartItem {
       'imageUrl': imageUrl,
       'name': name,
       'price': price,
+      'stock':stock,
       'discountprice': discountprice,
       'addedAt': Timestamp.fromDate(addedAt),
     };

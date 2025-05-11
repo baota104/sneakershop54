@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:sneaker_shop/domains/model/OrderModel.dart';
 
 abstract class CartEventBase extends Equatable {
   const CartEventBase();
@@ -23,13 +24,13 @@ class DeleteItemCart extends CartEventBase {
 }
 
 // Xác nhận thanh toán giỏ hàng
-class Confirm extends CartEventBase {
-  final String orderId;
+class CreateOrder extends CartEventBase {
+  final OrderModel orderModel;
 
-  const Confirm({required this.orderId});
+  const CreateOrder({required this.orderModel});
 
   @override
-  List<Object?> get props => [orderId];
+  List<Object?> get props => [orderModel];
 }
 
 // Thêm sản phẩm vào giỏ hàng

@@ -1,21 +1,31 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_event.dart';
+import 'package:sneaker_shop/domains/model/CartModel.dart';
+import 'package:sneaker_shop/domains/model/OrderDetail.dart';
+import 'package:sneaker_shop/domains/model/OrderModel.dart';
+import 'package:uuid/uuid.dart';
 
 import '../main/each_screen/MainScreen.dart';
+import 'cart_state.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final double totalCost;
   final double Subtotal;
   final double Delivery;
   final double discount;
+  final CartModel cartItem;
 
   CheckoutScreen({
     required this.totalCost,
     required this.Subtotal,
     required this.Delivery,
-    required this.discount
+    required this.discount,
+    required this.cartItem
   });
 
   @override
@@ -29,10 +39,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Map<String, dynamic>? userData;
   TextEditingController emailController = TextEditingController(text: "bao@gmail.com");
   TextEditingController phoneController = TextEditingController(text: "+084-113");
+  late CartBloc cartBloc;
 
   @override
   void initState() {
     super.initState();
+    cartBloc = context.read<CartBloc>();
     _loadUserData();
 
   }
@@ -78,9 +90,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     return Scaffold(
       appBar: _buildAppBar(context),
-      body: Container(
+      body: BlocConsumer<CartBloc,CartState>(
+  listener: (context, state) {
+  },
+  builder: (context, state) {
+    if(state.status == CartStatus.orderSuccess){
+      // _showPaymentSuccessDialog();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showPaymentSuccessDialog();
+      });
+    }
+    else if(state.status == CartStatus.orderError){
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(state.message.toString()),
+          backgroundColor: Colors.green,
+        ));
+      });
+    }
+    else{
+      // WidgetsBinding.instance.addPostFrameCallback((_) {
+      //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      //     content: Text(state.message.toString()),
+      //     backgroundColor: Colors.green,
+      //   ));
+      // });
+
+    }
+    return Container(
         color: Color(0xFFF7F7F9),
-        // constraints: BoxConstraints.expand(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -88,7 +127,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 _buildTotalCost(screenWidth, screenHeight)
               ],
             ),
-          ),
+          );
+  },
+),
     );
   }
 
@@ -268,7 +309,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
-         _showPaymentSuccessDialog();
+          var uuid = Uuid();
+          String orderId = uuid.v4(); // tạo chuỗi id ngẫu nhiên
+          String userId = widget.cartItem.user_id; // lấy userId từ cart
+          DateTime time = DateTime.now();
+          String addresss = "nhanchinh";
+          List<OrderDetail> orderdetail = [];
+          for (var i in widget.cartItem.cart_items){
+            var ord = OrderDetail(productId: i.pro_id, name: i.name, imageUrl: i.imageUrl, price: i.price, discountprice: i.discountprice);
+            orderdetail.add(ord);
+          }
+          var orderModel = OrderModel(orderId:orderId, userId: userId, status: "pending", totalAmount: widget.totalCost, orderDetails: orderdetail, time: time, address: addresss);
+         cartBloc.add(CreateOrder(orderModel: orderModel));
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF0D6EFD),

@@ -1,5 +1,6 @@
 import 'package:sneaker_shop/domains/data_source/remote/firebase/cart_firebase.dart';
 import 'package:sneaker_shop/domains/model/CartModel.dart';
+import 'package:sneaker_shop/domains/model/OrderModel.dart';
 
 class CartRepository {
   final CartFirebase _cartFirebase;
@@ -22,8 +23,8 @@ class CartRepository {
   }
 
   // Xác nhận thanh toán
-  Future<bool> confirmOrder(String orderId) async {
+  Future<int> createOrder(OrderModel order) async {
     // return _cartFirebase.confirm(orderId);
-    return false;
+    return _cartFirebase.createOrder(order);
   }
 }

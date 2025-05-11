@@ -103,7 +103,23 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           centerTitle: false,
           actions: [
-            Padding(
+            BlocListener<CartBloc, CartState>(
+              listener: (context, state) {
+                print(state.status);
+                if (state.status == CartStatus.addSuccess) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text("add to cart successfully"),
+                    backgroundColor: Colors.green,
+                  ));
+                }
+                else if(state.status == CartStatus.failure){
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text("add to cart unsuccessfully"),
+                    backgroundColor: Colors.green,
+                  ));
+                }
+              },
+          child: Padding(
               padding: const EdgeInsets.only(right: 15), // Đưa icon giỏ hàng gần vào
               child: Stack(
                 clipBehavior: Clip.none, // Cho phép hiển thị phần tử Positioned ra ngoài Stack
@@ -137,6 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+          ),
           ],
         ),
         drawer: Drawer(
@@ -194,7 +211,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder:
+                      (context)=> MainScreen(navigatorPage: 1)
+                  ));
+                },
                 child: Text(
                   "See all",
                   style: TextStyle(color: Colors.blue, fontSize: 14,
@@ -338,23 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           double cardWidth = constraints.maxWidth * 0.4; // Chiều rộng card tối đa 40% màn hình
-          return BlocListener<CartBloc, CartState>(
-            listener: (context, state) {
-              print(state.status);
-              if (state.status == CartStatus.addSuccess) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text("Đã thêm vào giỏ hàng"),
-                  backgroundColor: Colors.green,
-                ));
-              }
-              else if(state.status == CartStatus.failure){
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text("Đã thêm vào giỏ hàng"),
-                  backgroundColor: Colors.green,
-                ));
-              }
-            },
-            child: ListView.builder(
+          return ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: 16),
             itemCount: 5,
@@ -380,7 +385,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             },
-          ),
         );
         },
       ),

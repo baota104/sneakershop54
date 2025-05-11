@@ -38,7 +38,7 @@ class _CartScreenState extends State<CartScreen> {
        for (var item in _cartModel!.cart_items) {
          double price = item.price;
          newdiscount += item.discountprice;
-         newSubtotal += price ;
+         newSubtotal += price - newdiscount ;
        }
      }
      double newDeliveryFee = newSubtotal >= 200 ? 0.0 : 15.0;
@@ -81,7 +81,7 @@ class _CartScreenState extends State<CartScreen> {
             if (state.status == CartStatus.success && state.cartModel != null) {
               setState(() {
                 _cartModel = state.cartModel;
-                _recalculatePrices(); // ✅ safe to call setState here
+                _recalculatePrices();
               });
               // if(state.status == CartStatus.confirmSuccess){
               //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Dat hang thanh cong")));
@@ -154,91 +154,103 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildCartItem(CartItem item, int index, double screenWidth, double screenHeight) {
-    return Slidable(
-      key: ValueKey(item.name),
-      startActionPane: ActionPane(
-        motion: const BehindMotion(),
-        extentRatio: 0.20,
-        children: [
-          Container(
-            width: screenWidth * 0.15,
-            height: screenHeight * 0.17,
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ],
-      ),
-      endActionPane: ActionPane(
-        motion: const BehindMotion(),
-        extentRatio: 0.20,
-        children: [
-          Container(
-            width: screenWidth * 0.15,
-            height: screenHeight * 0.12,
-            decoration: BoxDecoration(
-              color: Colors.red,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: IconButton(
-              icon: Icon(Icons.delete, color: Colors.white, size: screenWidth * 0.07),
-              onPressed: () => cartBloc.add(DeleteItemCart(productId: item.pro_id)),
-            ),
-          ),
-        ],
-      ),
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.03, vertical: screenHeight * 0.015),
-        color: Colors.white,
-        child: Padding(
-          padding: EdgeInsets.all(screenWidth * 0.04),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  color: Color(0xFFF7F7F9),
-                  child: Image.network(item.imageUrl,
-                      width: screenWidth * 0.22,
-                      height: screenWidth * 0.22,
-                      fit: BoxFit.contain),
-                ),
-              ),
-              SizedBox(width: screenWidth * 0.04),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.045,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: GoogleFonts.raleway().fontFamily,
-                      ),
-                    ),
+   Widget _buildCartItem(CartItem item, int index, double screenWidth, double screenHeight) {
+     return Slidable(
+       key: ValueKey(item.name),
+       endActionPane: ActionPane(
+         motion: const BehindMotion(),
+         extentRatio: 0.20,
+         children: [
+           Container(
+             width: screenWidth * 0.15,
+             height: screenHeight * 0.12,
+             decoration: BoxDecoration(
+               color: Colors.red,
+               borderRadius: BorderRadius.circular(10),
+             ),
+             child: IconButton(
+               icon: Icon(Icons.delete, color: Colors.white, size: screenWidth * 0.07),
+               onPressed: () => cartBloc.add(DeleteItemCart(productId: item.pro_id)),
+             ),
+           ),
+         ],
+       ),
+       child: Stack(
+         children: [
+           Card(
+             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+             margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.03, vertical: screenHeight * 0.015),
+             color: Colors.white,
+             child: Padding(
+               padding: EdgeInsets.all(screenWidth * 0.04),
+               child: Row(
+                 children: [
+                   ClipRRect(
+                     borderRadius: BorderRadius.circular(10),
+                     child: Container(
+                       color: Color(0xFFF7F7F9),
+                       child: Image.network(item.imageUrl,
+                           width: screenWidth * 0.22,
+                           height: screenWidth * 0.22,
+                           fit: BoxFit.contain),
+                     ),
+                   ),
+                   SizedBox(width: screenWidth * 0.04),
+                   Expanded(
+                     child: Column(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       children: [
+                         Text(
+                           item.name,
+                           maxLines: 2,
+                           overflow: TextOverflow.ellipsis,
+                           style: TextStyle(
+                             fontSize: screenWidth * 0.045,
+                             fontWeight: FontWeight.bold,
+                             fontFamily: GoogleFonts.raleway().fontFamily,
+                           ),
+                         ),
+                         SizedBox(height: screenHeight * 0.005),
+                         Text("\$${item.price.toStringAsFixed(2)}",
+                             style: TextStyle(
+                               fontSize: screenWidth * 0.04,
+                               color: Colors.grey,
+                               fontFamily: GoogleFonts.poppins().fontFamily,
+                             )),
+                       ],
+                     ),
+                   ),
+                 ],
+               ),
+             ),
+           ),
+           if (item.stock == 0)
+             Positioned.fill(
+               child: Container(
+                 decoration: BoxDecoration(
+                   color: Colors.white.withOpacity(0.75),
+                   borderRadius: BorderRadius.circular(10),
+                 ),
+                 child: Center(
+                   child: Text(
+                     "Out of Stock",
+                     style: TextStyle(
+                       color: Colors.redAccent,
+                       fontSize: screenWidth * 0.045,
+                       fontWeight: FontWeight.bold,
+                       fontFamily: GoogleFonts.poppins().fontFamily,
+                     ),
+                   ),
+                 ),
+               ),
+             ),
+         ],
+       ),
+     );
+   }
 
-                    SizedBox(height: screenHeight * 0.005),
-                    Text("\$${item.price.toStringAsFixed(2)}",
-                        style: TextStyle(fontSize: screenWidth * 0.04, color: Colors.grey,
-                          fontFamily: GoogleFonts.poppins().fontFamily,
-                        )),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildTotalCost(double screenWidth,double screenHeight) {
+   Widget _buildTotalCost(double screenWidth,double screenHeight) {
     return Container(
       color: Colors.white,
       child: Padding(
@@ -282,7 +294,16 @@ class _CartScreenState extends State<CartScreen> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => CheckoutScreen(totalCost: _totalCost, Subtotal: _subtotal, Delivery: _deliveryFee, discount: _totaldiscount,)));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BlocProvider.value(
+                value: cartBloc,
+                child: CheckoutScreen(totalCost: _totalCost, Subtotal: _subtotal, Delivery: _deliveryFee, discount: _totaldiscount, cartItem: _cartModel!,),
+              ),
+            ),
+          );
+          //Navigator.push(context, MaterialPageRoute(builder: (context) => CheckoutScreen(totalCost: _totalCost, Subtotal: _subtotal, Delivery: _deliveryFee, discount: _totaldiscount, cartItem: _cartModel!,)));
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF0D6EFD),

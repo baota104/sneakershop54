@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/user_firebase.dart';
 
 class ChangepassScreen extends StatefulWidget {
   const ChangepassScreen({super.key});
@@ -13,6 +14,7 @@ class _ChangepassScreenState extends State<ChangepassScreen> {
   final _oldpass = TextEditingController();
   final _newpass1 = TextEditingController();
   final _newpass2 = TextEditingController();
+  final UserFirebase _userFirebase = UserFirebase();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -229,7 +231,5 @@ class _ChangepassScreenState extends State<ChangepassScreen> {
       )),
     );
   }
-  void _onhandlechangepassword(){
-
-  }
+  Future<void> _onhandlechangepassword()async{}
 }

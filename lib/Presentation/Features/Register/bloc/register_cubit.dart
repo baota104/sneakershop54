@@ -9,9 +9,9 @@ class RegisterCubit extends Cubit<RegisterState> {
   final AuthenticationRepository authenticationRepository;
   RegisterCubit({required this.authenticationRepository}) : super(const RegisterState());
 
-  Future<void> register(String email,String password) async{
+  Future<void> register(String email,String password,String name) async{
     try{
-        await authenticationRepository.registerWithEmailAndPassword(email: email, password: password);
+        await authenticationRepository.registerWithEmailAndPassword(email: email, password: password,name: name);
     }
     catch(e){
       print("loi o dang ki" + e.toString());

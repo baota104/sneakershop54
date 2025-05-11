@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/Changepass_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/Edit_infoScreen.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/user_firebase.dart';
+import 'package:sneaker_shop/domains/model/UserModel.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,7 +17,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String? userId;
   Map<String, dynamic>? userData;
-
+  UserModel? userModel;
   @override
   void initState() {
     super.initState();
@@ -24,35 +26,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Lấy UID từ SharedPreferences và truy vấn Firestore
   Future<void> _loadUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? uid = prefs.getString('uid');
-
-    print("UID lấy từ SharedPreferences: $uid"); // Kiểm tra UID
-
-    if (uid != null) {
+    UserFirebase userFirebase = UserFirebase();
+    final user = await userFirebase.getUser();
+    if (user != null) {
       setState(() {
-        userId = uid;
+        userModel= user;
       });
-
-      try {
-        DocumentSnapshot userDoc =
-        await FirebaseFirestore.instance.collection("Users").doc(uid).get();
-
-        print("Dữ liệu lấy từ Firestore: ${userDoc.data()}"); // Kiểm tra dữ liệu lấy về
-
-        if (userDoc.exists) {
-          setState(() {
-            userData = userDoc.data() as Map<String, dynamic>;
-          });
-        } else {
-          print("Không tìm thấy user trong Firestore.");
-        }
-      } catch (e) {
-        print("Lỗi khi lấy dữ liệu từ Firestore: $e");
-      }
     } else {
-      print("UID chưa được lưu hoặc bị null.");
+      print("No user data found.");
+      // Optionally show a snackbar or redirect
     }
+
   }
 
 
@@ -72,7 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-      body: userData == null
+      body: userModel == null
           ? Center(child: CircularProgressIndicator()) // Hiển thị loading nếu chưa có dữ liệu
           : SingleChildScrollView(
         child: Column(
@@ -80,13 +64,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _buildprofile(),
-            _builditemfield("Your Name", userData!["name"] ?? "N/A"),
+            _builditemfield("Your Name", userModel!.name  ?? "N/A"),
             SizedBox(height: 5),
-            _builditemfield("Email Address", userData!["email"] ?? "N/A"),
+            _builditemfield("Email Address", userModel!.email ?? "N/A"),
             SizedBox(height: 5),
-            _builditemfield("Phone Number", userData!["phone"] ?? "N/A"),
+            _builditemfield("Phone Number", userModel!.phone ?? "N/A"),
             SizedBox(height: 5),
-            _builditemfield("Address", userData!["address"] ?? "N/A"),
+            _builditemfield("Address", userModel!.address ?? "N/A"),
             SizedBox(height: 25),
             _buildpassfield(),
             _buildeditbutton(),
@@ -224,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: ElevatedButton(
           onPressed: () {
             Navigator.push(
-                context, MaterialPageRoute(builder: (context) => EditInfoscreen(userData: userData!,)));
+                context, MaterialPageRoute(builder: (context) => EditInfoscreen(userData: userModel!,)));
           },
           style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF0D6EFD),

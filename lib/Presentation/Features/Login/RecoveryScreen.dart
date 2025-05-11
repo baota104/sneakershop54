@@ -1,8 +1,11 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sneaker_shop/Presentation/Features/Login/LoginScreen.dart';
+
+import 'bloc/login_cubit.dart';
 
 class Recoveryscreen extends StatefulWidget {
   const Recoveryscreen({super.key});
@@ -128,43 +131,119 @@ class _RecoveryscreenState extends State<Recoveryscreen> {
       )),
     );
   }
+  Future<void> _onhandleloginsubmitgoogle () async {
 
-  void _onhandlesendemail(){
+    final logincubit = context.read<LoginCubit>();
+
+    try{
+      final success = await logincubit.loginWithGoogle();
+      final message = success ? "Đăng nhập Google thành công!" : "Đăng nhập Google thất bại.";
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    }
+    catch(e){
+      print(e.toString());
+    }
+    return;
+  }
+  Future<void> _onhandlesendemail() async{
     String email = _emailController.text.trim();
-    Future.delayed(const Duration(seconds: 2), () {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            title: Column(
-              children: [
-                Icon(Icons.email_outlined, size: 50, color: Colors.blue),
-                SizedBox(height: 10),
-                Text("Check Your Email", textAlign: TextAlign.center,
+    final logincubit = context.read<LoginCubit>();
+    try {
+      final success = await logincubit.resetPassword(email);
+      if (success){
+        Future.delayed(const Duration(seconds: 2), () {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+                title: Column(
+                  children: [
+                    Icon(Icons.email_outlined, size: 50, color: Colors.blue),
+                    SizedBox(height: 10),
+                    Text(
+                      "Check Your Email",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: GoogleFonts
+                            .raleway()
+                            .fontFamily,
+                      ),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  "We have sent a password recovery code to your email.",
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily:GoogleFonts.raleway().fontFamily,
+                    fontFamily: GoogleFonts
+                        .poppins()
+                        .fontFamily,
                   ),
                 ),
-              ],
-            ),
-            content:  Text(
-              "We have sent a password recovery code to your email.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily:GoogleFonts.poppins().fontFamily,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context); // Đóng dialog
-                },
-                child: const Text("OK", style: TextStyle(color: Colors.blue)),
-              )
-            ],
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Đóng dialog
+                    },
+                    child: const Text(
+                        "OK", style: TextStyle(color: Colors.blue)),
+                  )
+                ],
+              );
+            },
           );
-        },
-      );
-    });
+        });
+    }
+      else{
+        Future.delayed(const Duration(seconds: 2), () {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+                title: Column(
+                  children: [
+                    Icon(Icons.email_outlined, size: 50, color: Colors.blue),
+                    SizedBox(height: 10),
+                    Text(
+                      "Send email failed",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: GoogleFonts
+                            .raleway()
+                            .fontFamily,
+                      ),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  "Enter exactly your email",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: GoogleFonts
+                        .poppins()
+                        .fontFamily,
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Đóng dialog
+                    },
+                    child: const Text(
+                        "OK", style: TextStyle(color: Colors.blue)),
+                  )
+                ],
+              );
+            },
+          );
+        });
+      }
+    }
+    catch(e){
+      print(e.toString());
+    }
   }}

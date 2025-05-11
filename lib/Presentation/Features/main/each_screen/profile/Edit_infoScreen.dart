@@ -4,9 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/user_firebase.dart';
+import 'package:sneaker_shop/domains/model/UserModel.dart';
 
 class EditInfoscreen extends StatefulWidget {
-  final Map<String, dynamic> userData;
+  final UserModel userData;
 
   const EditInfoscreen({super.key, required this.userData});
 
@@ -22,13 +24,14 @@ class _EditInfoscreenState extends State<EditInfoscreen> {
   late TextEditingController _nameController;
   late TextEditingController _locationController;
   late TextEditingController _phoneController;
+  UserFirebase _userFirebase = UserFirebase();
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.userData["name"]);
-    _locationController = TextEditingController(text: widget.userData["address"]);
-    _phoneController = TextEditingController(text: widget.userData["phone"]);
+    _nameController = TextEditingController(text: widget.userData.name);
+    _locationController = TextEditingController(text: widget.userData.address);
+    _phoneController = TextEditingController(text: widget.userData.phone);
   }
 
   Future<void> _pickImage() async {
@@ -42,17 +45,20 @@ class _EditInfoscreenState extends State<EditInfoscreen> {
 
   Future<void> _updateUserData() async {
     try {
-      await FirebaseFirestore.instance.collection("Users").doc(widget.userData["uid"]).update({
-        "name": _nameController.text,
-        "address": _locationController.text,
-        "phone": _phoneController.text,
-      });
-
-      // Hiển thị thông báo thành công
+      bool check = await _userFirebase.updateUserData(_nameController.text.toString(),_locationController.text.toString(),_phoneController.text.toString());
+      if(check){
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Cập nhật thông tin thành công!")),
-      );
-      Navigator.pop(context);
+      SnackBar(content: Text("Cập nhật thông tin thành công!")),
+        );
+        Navigator.pop(context);
+    }
+      else{
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Cập nhật thông tin thất bại")),
+        );
+        Navigator.pop(context);
+      }
+
     } catch (e) {
       print("Lỗi cập nhật dữ liệu: $e");
     }
@@ -73,7 +79,9 @@ class _EditInfoscreenState extends State<EditInfoscreen> {
           Padding(
             padding: const EdgeInsets.only(right: 15),
             child: GestureDetector(
-              onTap: _updateUserData,
+              onTap: (){
+                _updateUserData();
+              },
               child: Container(
                 alignment: Alignment.center,
                 child: Text("Save",

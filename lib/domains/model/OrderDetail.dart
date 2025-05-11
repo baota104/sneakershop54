@@ -1,35 +1,37 @@
 class OrderDetail {
-  String orderDetailId;
-  String orderId;
-  String productId;
-  int quantity;
-  double price;
+   String productId;
+   String name;
+   String imageUrl;
+   double price;
+   double discountprice;
+
+
 
   OrderDetail({
-    required this.orderDetailId,
-    required this.orderId,
     required this.productId,
-    required this.quantity,
+    required this.name,
+    required this.imageUrl,
     required this.price,
+    required this.discountprice
   });
-
-  Map<String, dynamic> toMap() {
-    return {
-      "order_detail_id": orderDetailId,
-      "order_id": orderId,
-      "product_id": productId,
-      "quantity": quantity,
-      "price": price,
-    };
-  }
 
   factory OrderDetail.fromMap(Map<String, dynamic> map) {
     return OrderDetail(
-      orderDetailId: map["order_detail_id"],
-      orderId: map["order_id"],
-      productId: map["product_id"],
-      quantity: map["quantity"],
-      price: map["price"],
+      productId: map['productId'] ?? '',
+      name: map['name'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+      discountprice: (map['price'] ?? 0).toDouble(),
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'productId': productId,
+      'name': name,
+      'imageUrl': imageUrl,
+      'price': price,
+      'discountprice':discountprice,
+    };
   }
 }

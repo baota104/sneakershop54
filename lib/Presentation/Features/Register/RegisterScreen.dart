@@ -17,6 +17,8 @@ class _RegisterscreenState extends State<Registerscreen> {
   final TextEditingController _usermailController = TextEditingController();
   final TextEditingController _userpassController = TextEditingController();
   bool isvisibleicon = true;
+  final _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,19 +36,22 @@ class _RegisterscreenState extends State<Registerscreen> {
                   minHeight:double.minPositive
               ),
               child: IntrinsicHeight(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _buildtitleandcontent(),
-                    _buildnamefield(),
-                    _buildemailfield(),
-                    SizedBox(height: 25,),
-                    _buildpasswordfield(),
-                    _buildsignupbutton(),
-                    _buildgoogle(),
-                    _buildtextlogin()
-                  ],
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _buildtitleandcontent(),
+                      _buildnamefield(),
+                      _buildemailfield(),
+                      SizedBox(height: 25,),
+                      _buildpasswordfield(),
+                      _buildsignupbutton(),
+                      _buildgoogle(),
+                      _buildtextlogin()
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -138,7 +143,7 @@ class _RegisterscreenState extends State<Registerscreen> {
   Widget _buildemailfield(){
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20),
-      height: 80,
+      height: 100,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -345,11 +350,15 @@ class _RegisterscreenState extends State<Registerscreen> {
     );
   }
   void _onsubmitregister(){
+    if (!_formKey.currentState!.validate()) {
+      return; // Nếu form không hợp lệ, không làm gì cả
+    }
     final registercubit = context.read<RegisterCubit>();
     var email = _usermailController.text;
     var password = _userpassController.text;
+    var name = _usernameController.text;
     try{
-      registercubit.register(email, password);
+      registercubit.register(email, password,name);
     }
     catch(e){
       print(e.toString()+"loi o register");

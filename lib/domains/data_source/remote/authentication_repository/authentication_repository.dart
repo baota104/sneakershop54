@@ -16,18 +16,22 @@ abstract class AuthenticationRepository{
   Stream<AuthenticationStatus> get status;
   Stream<UserEntity> get user;
   // thi lam nhu sau
-
+  Future<void> loginWithGoogle();
   Future<void> loginWithEmailAndPassword({
     required String email,
     required String password
 });
   Future<void> registerWithEmailAndPassword({
     required String email,
-    required String password
+    required String password,
+    required String name
   });
+  Future<void> sendPasswordResetEmail(String email);
+
 
 
 }
+
 class AuthenticationRepositoryImpl extends AuthenticationRepository{
   final FirebaseAuthService firebaseAuthService;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -51,6 +55,7 @@ class AuthenticationRepositoryImpl extends AuthenticationRepository{
       }
     });
   }
+
 
   @override
   Future<void> loginWithEmailAndPassword({
@@ -92,29 +97,46 @@ class AuthenticationRepositoryImpl extends AuthenticationRepository{
 
   @override
   Future<void> registerWithEmailAndPassword({
+
     required String email,
     required String password,
+    required String name
   }) async {
     try {
-      final user = await firebaseAuthService.registerWithEmailAndPassword(email: email, password: password);
-
-      if (user != null) {
-        await _firestore.collection("Users").doc(user.uid).set({
-          "uid": user.uid,
-          "email": user.email,
-          "name": "",  // Mặc định là chuỗi rỗng
-          "phone": "",  // Mặc định là chuỗi rỗng
-          "address": "",  // Mặc định là chuỗi rỗng
-          "password": password,  // Nếu cần lưu mật khẩu (không khuyến khích)
-          "createdAt": FieldValue.serverTimestamp(),
-        });
-        print("User registered and saved in Firestore!");
+      final user = await firebaseAuthService.registerWithEmailAndPassword(email: email, password: password,name: name);
+      if(user!= null){
+        print("Đăng ký thành công. Tiến hành đăng xuất...");
+        await FirebaseAuth.instance.signOut(); //
       }
     } catch (e) {
       print("Error registering user: $e");
     }
   }
 
+  @override
+  Future<void> loginWithGoogle() async {
+    try {
+      final user = await firebaseAuthService.signInWithGoogle();
+      if (user != null) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('uid', user.uid);
+        print("Google UID saved!");
+      }
+    } catch (e) {
+      print("Google Login Error: $e");
+    }
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    try{
+      await firebaseAuthService.sendPasswordResetEmail(email);
+    }
+    catch(e){
+      print(e.toString());
+    }
+  }
+
+  }
 
 
-}

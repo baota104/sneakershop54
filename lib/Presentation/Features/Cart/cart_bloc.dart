@@ -57,13 +57,20 @@ class CartBloc extends Bloc<CartEventBase,CartState>{
     });
 
 
-    on<Confirm>((event, emit) async {
+    on<CreateOrder>((event, emit) async {
       try {
         emit(CartState.cartLoading());
-        await _cartRepository.confirmOrder(event.orderId);
-        emit(CartState.confirmSuccess());
+        int check = await  _cartRepository.createOrder(event.orderModel);
+        if(check == 0){
+          emit(CartState.productoutofstock(message: "the order contains a product is out of stock"));
+        }
+        else if(check == 1)
+           emit(CartState.createOrderSuccess());
+        else{
+          emit(CartState.createOrderError(message: "system error"));
+        }
       } catch (e) {
-        emit(CartState.confirmError(message: e.toString()));
+        emit(CartState.createOrderError(message: e.toString()));
       }
     });
     // cart_bloc.dart

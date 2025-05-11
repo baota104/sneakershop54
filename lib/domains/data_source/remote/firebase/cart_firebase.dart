@@ -2,6 +2,7 @@ import 'dart:ffi';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sneaker_shop/domains/model/OrderModel.dart';
 
 import '../../../model/CartModel.dart';
 
@@ -30,10 +31,34 @@ class CartFirebase {
             .collection("cart_items")
             .get();
 
-        List<CartItem> cartItems = cartItemsSnapshot.docs.map((itemDoc) {
-          return CartItem.fromMap(itemDoc.data() as Map<String, dynamic>);
-        }).toList();
+        List<CartItem> cartItems = [];
 
+        for (var itemDoc in cartItemsSnapshot.docs) {
+          Map<String, dynamic> itemData = itemDoc.data() as Map<String,
+              dynamic>;
+          String productId = itemData['pro_id'];
+
+          // Lấy thông tin sản phẩm mới nhất từ "Products"
+          DocumentSnapshot productSnap =
+          await _firestore.collection("Products").doc(productId).get();
+
+          if (productSnap.exists) {
+            Map<String, dynamic> productData =
+            productSnap.data() as Map<String, dynamic>;
+
+            cartItems.add(CartItem(
+              pro_id: productId,
+              imageUrl: productData['imageUrl'],
+              name: productData['name'],
+              price: productData['price']?.toDouble() ?? 0,
+              stock: productData['stock'] ?? 0,
+              discountprice: productData['discountprice']?.toDouble() ?? 0,
+              addedAt: productData['date'] != null
+                  ? (productData['date'] as Timestamp).toDate()
+                  : DateTime.now(),
+            ));
+          }
+        }
         return CartModel(
           cart_id: cartId,
           user_id: data['user_id'],
@@ -50,7 +75,7 @@ class CartFirebase {
   Future<bool> AddItemToCart(String proId) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? userId = prefs.getString('uid');
-    if (userId == null) false;
+    if (userId == null) return false;
 
     // 1. Lấy thông tin sản phẩm từ "Products"
     final productSnapshot = await _firestore.collection("Products").doc(proId).get();
@@ -66,6 +91,7 @@ class CartFirebase {
       imageUrl: productData['imageUrl'] ?? '',
       name: productData['name'] ?? '',
       price: (productData['price'] ?? 0).toDouble(),
+      stock: productData['stock']??0,
       discountprice: (productData['discountprice'] ?? 0).toDouble(),
       addedAt: DateTime.now(),
     );
@@ -90,7 +116,21 @@ class CartFirebase {
       cartId = snapshot.docs.first.id;
     }
 
-    // 3. Thêm item vào subcollection "cart_items"
+    // 3. Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
+    final existingItemSnapshot = await _firestore
+        .collection("Carts")
+        .doc(cartId)
+        .collection("cart_items")
+        .where("pro_id", isEqualTo: proId)
+        .limit(1)
+        .get();
+
+    if (existingItemSnapshot.docs.isNotEmpty) {
+      print("Sản phẩm đã có trong giỏ hàng");
+      return false;
+    }
+
+    // 4. Thêm item vào subcollection "cart_items"
     await _firestore
         .collection("Carts")
         .doc(cartId)
@@ -99,6 +139,7 @@ class CartFirebase {
 
     return true;
   }
+
 
 
   Future<bool> deleteItemCart(String proId) async {
@@ -124,10 +165,64 @@ class CartFirebase {
 
       if (itemSnapshot.docs.isNotEmpty) {
         await itemSnapshot.docs.first.reference.delete();
-      }return true;
-    }return false;
+        return true;
+      }
+    }
+    return false;
 
   }
+  Future<int> createOrder(OrderModel order) async {
+    WriteBatch batch = _firestore.batch();
+
+    try {
+      // 1. Kiểm tra tồn kho tất cả sản phẩm
+      for (var detail in order.orderDetails) {
+        DocumentReference productRef = _firestore.collection("Products").doc(detail.productId);
+        DocumentSnapshot productSnap = await productRef.get();
+
+        if (!productSnap.exists) {
+          throw Exception("Sản phẩm không tồn tại: ${detail.productId}");
+        }
+
+        final stock = productSnap['stock'];
+        if (stock != 1) {
+          print("Sản phẩm ${detail.productId} đã hết hàng");
+          return 0; // Trả về 0 để báo sản phẩm hết hàng
+        }
+
+        // Đánh dấu cập nhật stock = 0
+        batch.update(productRef, {'stock': 0});
+      }
+
+      // 2. Tạo đơn hàng
+      DocumentReference orderRef = _firestore.collection("Orders").doc();
+      batch.set(orderRef, {
+        'user_id': order.userId,
+        'status': order.status,
+        'total_amout': order.totalAmount,
+        'time': Timestamp.fromDate(order.time),
+        'address': order.address,
+      });
+
+      // 3. Tạo chi tiết đơn hàng (subcollection "order_details")
+      for (var detail in order.orderDetails) {
+        DocumentReference detailRef = orderRef.collection("order_details").doc();
+        batch.set(detailRef, detail.toMap());
+      }
+
+      // 4. Commit batch
+      await batch.commit();
+
+      print("Đơn hàng đã được tạo thành công!");
+      return 1; // Thành công
+    } catch (e, stacktrace) {
+      print("Lỗi khi tạo đơn hàng: $e");
+      print("Stacktrace: $stacktrace");
+      return 2; // Lỗi khác
+    }
+  }
+
+
 
   Future<void> confirm(String orderId) async {
     // Xử lý tạo đơn hàng, xoá giỏ
