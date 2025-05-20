@@ -3,8 +3,11 @@ import 'dart:ffi';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/domains/model/OrderModel.dart';
+import 'package:sneaker_shop/domains/model/PaymentModel.dart';
+import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
 import '../../../model/CartModel.dart';
+import '../../../model/FavoriteModel.dart';
 
 class CartFirebase {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -190,8 +193,8 @@ class CartFirebase {
           return 0; // Trả về 0 để báo sản phẩm hết hàng
         }
 
-        // Đánh dấu cập nhật stock = 0
-        batch.update(productRef, {'stock': 0});
+        // // Đánh dấu cập nhật stock = 0
+        // batch.update(productRef, {'stock': 0});
       }
 
       // 2. Tạo đơn hàng
@@ -199,6 +202,7 @@ class CartFirebase {
       batch.set(orderRef, {
         'user_id': order.userId,
         'status': order.status,
+        'paymentmethod':order.paymentmethod,
         'total_amout': order.totalAmount,
         'time': Timestamp.fromDate(order.time),
         'address': order.address,
@@ -221,11 +225,63 @@ class CartFirebase {
       return 2; // Lỗi khác
     }
   }
-
-
-
-  Future<void> confirm(String orderId) async {
-    // Xử lý tạo đơn hàng, xoá giỏ
-    print("Xác nhận thanh toán cho orderId: $orderId");
+  Future<bool> createPayment(PaymentModel payment) async {
+    try {
+      await _firestore.collection("Payments").doc(payment.paymentId).set(payment.toMap());
+      return true;
+    } catch (e) {
+      print("Error creating payment: $e");
+      return false;
+    }
   }
+
+
+  Future<bool> addToFavorite(ProductModel productData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final uid = prefs.getString('uid');
+
+      if (uid == null) throw Exception("UID không tồn tại trong SharedPreferences");
+
+      // Chuyển đổi sang FavoriteModel
+      final favoriteModel = FavoriteModel.fromMap({
+        "pro_id": productData.productId,
+        "activity": productData.activity,
+        "name": productData.name,
+        "price": productData.price,
+        "imageUrl": productData.imageUrl,
+      });
+
+      final favoriteDocRef = _firestore.collection("Favorites").doc(uid);
+
+      // Đảm bảo document gốc tồn tại
+      final docSnapshot = await favoriteDocRef.get();
+      if (!docSnapshot.exists) {
+        await favoriteDocRef.set({});
+      }
+
+      // Kiểm tra xem sản phẩm đã tồn tại chưa
+      final itemRef = favoriteDocRef.collection("items").doc(productData.productId);
+      final itemSnapshot = await itemRef.get();
+
+      if (itemSnapshot.exists) {
+        print("Sản phẩm đã có trong favorites.");
+        return false; // hoặc return true nếu bạn muốn coi như "ok" nhưng không thêm lại
+      }
+
+      // Nếu chưa tồn tại thì thêm mới
+      await itemRef.set(favoriteModel.toMap());
+
+      return true;
+    } catch (e) {
+      print("Lỗi thêm vào favorites: $e");
+      return false;
+    }
+  }
+
+
+
+
+
+
 }

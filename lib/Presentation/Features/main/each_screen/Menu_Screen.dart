@@ -135,6 +135,7 @@ class _MenuScreenState extends State<MenuScreen> {
     else if(title == "Sign Out"){
 
       logout();
+
     }
   }
   Future<void> logout() async {
@@ -144,6 +145,7 @@ class _MenuScreenState extends State<MenuScreen> {
     await prefs.remove('uid'); // Xóa UID khỏi SharedPreferences
     // final result = prefs.setBool("kOnboardingCompleted",false);
     // await prefs.remove("kOnboardingCompleted");
+    // final result = prefs.setBool("kOnboardingCompleted",false);
     print("Đã đăng xuất và xóa UID");
   }
 }

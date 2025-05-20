@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_event.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/cart_state.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
 import '../../../domains/model/CartModel.dart';
@@ -30,11 +31,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     isLoved = widget.product.isloved; // Gán trạng thái ban đầu từ sản phẩm
     cartBloc = context.read<CartBloc>();
   }
+  void toggleLove() async {
+    final shouldAdd = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Add to favorite?"),
+        content: Text("Do you want to add this item to your list?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text("Canceled"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text("OK"),
+          ),
+        ],
+      ),
+    );
+    final bool check ;
+    if (shouldAdd == true) {
+      setState(() {
+        cartBloc.add(AddtoFavorite(widget.product));
+        isLoved = true;
+      });
 
-  void toggleLove() {
-    setState(() {
-      isLoved = !isLoved;
-    });
+    }
   }
 
   @override
@@ -44,7 +66,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     return Scaffold(
       appBar: _buildAppBar(screenWidth),
-      body: Container(
+      body: BlocListener<CartBloc, CartState>(
+  listener: (context, state) {
+    if(state.status == CartStatus.addtofavoritesuccess){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("add to favorite successfully")),
+      );
+    }
+    else if(state.status == CartStatus.addtofavoriteerror){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("item is already in you favor")),
+      );
+    }
+  },
+  child: Container(
         constraints: BoxConstraints.expand(),
         color: Color(0xFFF7F7F9),
         child: SingleChildScrollView(
@@ -64,6 +99,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
       ),
+),
     );
   }
 

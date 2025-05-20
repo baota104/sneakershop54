@@ -11,6 +11,12 @@ class FetchListProduct extends HomeEventBase{
   List<Object?> get props => [];
 
 }
+class FetchComments extends HomeEventBase{
+  FetchComments();
+  @override
+  List<Object?> get props => [];
+
+}
 
 // class FetchTotalCart extends HomeEventBase{
 //

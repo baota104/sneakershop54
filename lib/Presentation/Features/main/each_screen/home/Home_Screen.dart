@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,8 +10,11 @@ import 'package:sneaker_shop/Presentation/Features/Product/ProductCard.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductDetail.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/MainScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/Menu_Screen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/favor_bloc.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/favor_event.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/home/Home_product_bloc.dart';
 import 'package:sneaker_shop/domains/data_source/remote/firebase/product_firebase.dart';
+import 'package:sneaker_shop/domains/model/CommentModel.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
 import 'package:sneaker_shop/domains/repository/product_repository.dart';
 
@@ -20,6 +22,7 @@ import '../../../../../domains/data_source/remote/firebase/cart_firebase.dart';
 import '../../../../../domains/repository/cart_repository.dart';
 import '../../../../Widgets/LoadingWidget.dart';
 import '../../../Cart/cart_state.dart';
+import 'Comment_list_widget.dart';
 import 'Home_event.dart';
 import 'Home_state.dart';
 // class HomeScreenContainer extends StatefulWidget {
@@ -62,6 +65,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late HomeProductBloc bloc;
   late CartBloc cartBloc;
+  late FavorBloc favorBloc;
+  List<CommentModel> commentmodel = [];
 
   @override
   void initState() {
@@ -69,57 +74,69 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     bloc = context.read<HomeProductBloc>();
     cartBloc = context.read<CartBloc>();
+    favorBloc = context.read<FavorBloc>();
     bloc.add(FetchListProduct()); // Gửi event sau khi widget đã được gắn vào cây widget
+    bloc.add(FetchComments());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-        appBar:AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: Builder(
-            builder: (context) => Padding(
-              padding: const EdgeInsets.only(left: 10),
-              child: GestureDetector(
-                onTap: () {
-                  Scaffold.of(context).openDrawer(); // Mở Drawer đúng cách
-                },
-                child: Image.asset("assets/images/menu.png", width: 24, height: 24),
-              ),
-            ),
-          ),
-          title: Center(
-            child: Text(
-              'Explore',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 32, // Giảm kích thước chữ để phù hợp hơn
-                fontWeight: FontWeight.bold,
-                fontFamily: GoogleFonts.raleway().fontFamily,
-              ),
-            ),
-          ),
-          centerTitle: false,
-          actions: [
-            BlocListener<CartBloc, CartState>(
-              listener: (context, state) {
-                print(state.status);
-                if (state.status == CartStatus.addSuccess) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("add to cart successfully"),
-                    backgroundColor: Colors.green,
-                  ));
-                }
-                else if(state.status == CartStatus.failure){
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("add to cart unsuccessfully"),
-                    backgroundColor: Colors.green,
-                  ));
-                }
+      appBar:AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: Builder(
+          builder: (context) => Padding(
+            padding: const EdgeInsets.only(left: 10),
+            child: GestureDetector(
+              onTap: () {
+                Scaffold.of(context).openDrawer(); // Mở Drawer đúng cách
               },
-          child: Padding(
+              child: Image.asset("assets/images/menu.png", width: 24, height: 24),
+            ),
+          ),
+        ),
+        title: Center(
+          child: Text(
+            'Explore',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 32, // Giảm kích thước chữ để phù hợp hơn
+              fontWeight: FontWeight.bold,
+              fontFamily: GoogleFonts.raleway().fontFamily,
+            ),
+          ),
+        ),
+        centerTitle: false,
+        actions: [
+          BlocListener<CartBloc, CartState>(
+            listener: (context, state) {
+              print(state.status);
+              if (state.status == CartStatus.addSuccess) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("add to cart successfully"),
+                  backgroundColor: Colors.green,
+                ));
+              }
+              else if(state.status == CartStatus.failure){
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("add to cart unsuccessfully"),
+                  backgroundColor: Colors.green,
+                ));
+              }
+              if(state.status == CartStatus.addtofavoritesuccess){
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("add to favorite successfully")),
+                );
+              }
+              else if(state.status == CartStatus.addtofavoriteerror){
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("item is already in you favor")),
+                );
+              }
+            },
+            child: Padding(
               padding: const EdgeInsets.only(right: 15), // Đưa icon giỏ hàng gần vào
               child: Stack(
                 clipBehavior: Clip.none, // Cho phép hiển thị phần tử Positioned ra ngoài Stack
@@ -127,13 +144,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
+                        context,
+                        MaterialPageRoute(
                           builder: (context) => BlocProvider.value(
-                        value: cartBloc,
-                        child: CartScreen(),
-                      ),
-                      ),
+                            value: cartBloc,
+                            child: CartScreen(),
+                          ),
+                        ),
                       );
                     },
                     child: Image.asset("assets/images/bag-2.png", width: 26, height: 26),
@@ -154,20 +171,30 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          ],
-        ),
-        drawer: Drawer(
-          child: MenuScreen(),
-        ),
+        ],
+      ),
+      drawer: Drawer(
+        child: MenuScreen(),
+      ),
       body:
       SafeArea(
         child: Container(
           child: BlocConsumer<HomeProductBloc, HomeStateBase>(
             bloc: bloc,
-            listener: (context, state) {},
+            listener: (context, state) {
+              if(state is FetchCommentSuccess){
+                setState(() {
+                  commentmodel = state.comments;
+                });
+              }
+              else if(state is FetchCommentError){
+                print(state.message);
+              }
+            },
             builder: (context, state) {
-              if (state is FetchListProductSuccess) {
-                return _buildhomescreen(state.listProduct);
+              if (state is FetchListProductSuccess ) {
+                print(commentmodel.length.toString() +"da xuat dc");
+                return _buildhomescreen(state.listProduct, commentmodel ?? []);
               } else if (state is HomeStateLoading) {
                 return Center(child: LoadingWidet());
               } else if (state is FetchListProductError) {
@@ -178,10 +205,11 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-       ),
-        );
+      ),
+    );
   }
-  Widget _buildhomescreen(List<ProductModel> productmodel){
+  Widget _buildhomescreen(List<ProductModel> productmodel,List<CommentModel> comments){
+    List<ProductModel> pro2 = productmodel.sublist(10,15);
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -189,7 +217,12 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(height: 20,),
           _buildProductList("Popular Shoes",productmodel),
           SizedBox(height: 20,),
-          _buildProductList("Recommened for you",productmodel)
+          _buildProductList("Recommened for you",pro2),
+          SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: CommentListWidget(commments: comments,), // 👉 Nhúng widget comment tại đây
+          ),
         ],
       ),
     );
@@ -260,10 +293,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         "15% OFF",
                         style: TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.purple,
-                          fontFamily: GoogleFonts.raleway().fontFamily
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.purple,
+                            fontFamily: GoogleFonts.raleway().fontFamily
                         ),
                       ),
                     ],
@@ -291,10 +324,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   right: 5,
                   bottom: 10,
                   child: Image.asset(
-                  "assets/images/shadow.png", // Thay ảnh của bạn ở đây
+                    "assets/images/shadow.png", // Thay ảnh của bạn ở đây
                     fit: BoxFit.cover,
                     width: 100,
-                ),),
+                  ),),
                 // Nhãn "NEW!"
                 Positioned(
                   right: 90,
@@ -319,6 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
   Widget _buildProductList(String title,List<ProductModel> productmodel){
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       height: 230,
@@ -336,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
               GestureDetector(
                 onTap: () {
                   Navigator.pushReplacement(context, MaterialPageRoute(builder:
-                  (context)=> MainScreen(navigatorPage: 1)
+                      (context)=> MainScreen(navigatorPage: 1)
                   ));
                 },
                 child: Text(
@@ -369,14 +403,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: GestureDetector(
                   onTap: (){
                     Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BlocProvider.value(
-                          value: cartBloc,
-                          child: ProductDetailScreen(product: productmodel[index],
-                        ),
-                      ),
-                    ));
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BlocProvider.value(
+                            value: cartBloc,
+                            child: ProductDetailScreen(product: productmodel[index],
+                            ),
+                          ),
+                        ));
                   },
                   child: SizedBox(
                     width: cardWidth,
@@ -385,7 +419,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             },
-        );
+          );
         },
       ),
     );

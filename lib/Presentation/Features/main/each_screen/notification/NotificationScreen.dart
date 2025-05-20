@@ -1,12 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification/Notification_bloc.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification/Notification_event.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification/Notification_state.dart';
 import 'package:sneaker_shop/Presentation/Widgets/LoadingWidget.dart';
 import 'package:sneaker_shop/domains/data_source/remote/firebase/notifycation_firebase.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/user_firebase.dart';
+import 'package:sneaker_shop/domains/model/UserModel.dart';
 import 'package:sneaker_shop/domains/repository/notifycation_repository.dart';
 
 import '../../../../../domains/model/NotificationModel.dart';
@@ -40,13 +45,28 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> {
   late NotificationBloc notibloc;
   late List<NotificationModel> notifications;
+  late UserModel _userModel;
+  UserFirebase _userFirebase = UserFirebase();
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     notibloc = context.read<NotificationBloc>();
     notibloc.add(FetchListNotification());
+    inituser();
   }
+  void inituser() async {
+    final user = await _userFirebase.getUser();
+    if (user != null) {
+      setState(() {
+        _userModel = user;
+      });
+    } else {
+      // Xử lý nếu không lấy được user (ví dụ: chuyển sang màn hình login)
+      print("User is null");
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +95,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     else{
       print("fetch noti error");
     }
-   return Container();
+   return Container(child: Center(child: Text("you dont have any notifications")),);
   },
 ),
     );
@@ -138,25 +158,32 @@ class _NotificationScreenState extends State<NotificationScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: screenWidth * 0.2,
-            height: screenWidth * 0.2,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Color(0xFFF7F7F9),
-            ),
-            child: Image.network(
-              notification.imageUrl,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Icon(Icons.image, color: Colors.grey, size: screenWidth * 0.1),
-            ),
-          ),
-          SizedBox(width: screenWidth * 0.04),
-          Expanded(
-                child:Text(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: screenWidth * 0.2,
+                height: screenWidth * 0.2,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Color(0xFFF7F7F9),
+                ),
+                child: Image.network(
+                  notification.imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    Icons.image,
+                    color: Colors.grey,
+                    size: screenWidth * 0.1,
+                  ),
+                ),
+              ),
+              SizedBox(width: screenWidth * 0.04),
+              Expanded(
+                child: Text(
                   notification.message,
                   style: GoogleFonts.raleway(
                     fontSize: screenWidth * 0.04,
@@ -164,28 +191,43 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     color: Colors.blue,
                   ),
                 ),
+              ),
+              SizedBox(width: screenWidth * 0.02),
+              Column(
+                children: [
+                  Text(
+                    timeAgo(notification.time),
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.035,
+                      color: Colors.black54,
+                      fontFamily: GoogleFonts.raleway().fontFamily,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, size: screenWidth * 0.045, color: Color(0xFF707B81)),
+                    onPressed: () => _removeNotification(index),
+                  ),
+                ],
+              )
+            ],
           ),
-          SizedBox(width: screenWidth * 0.02),
-          Column(
-            children: [
-              Text(
-                timeAgo(notification.time),
-                style: TextStyle(
-                  fontSize: screenWidth * 0.04,
-                  color: Colors.black54,
-                  fontFamily: GoogleFonts.raleway().fontFamily,
+          if (notification.message.toLowerCase().contains("your order has been completed"))
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _openShopCommentDialog(_userModel.name,_userModel.userId,_userModel.imageurl), // bạn cần định nghĩa hàm này
+                icon: Icon(Icons.rate_review, color: Colors.teal),
+                label: Text(
+                  "Rate us",
+                  style: TextStyle(color: Colors.teal, fontSize: screenWidth * 0.035),
                 ),
               ),
-              IconButton(
-                icon: Icon(Icons.close, size: screenWidth * 0.045, color: Color(0xFF707B81)),
-                onPressed: () => _removeNotification(index),
-              ),
-            ],
-          )
+            ),
         ],
       ),
     );
   }
+
   String timeAgo(DateTime notificationTime) {
     final now = DateTime.now();
     final difference = now.difference(notificationTime);
@@ -222,6 +264,79 @@ class _NotificationScreenState extends State<NotificationScreen> {
       notifications.clear();
     });
   }
+  void _openShopCommentDialog(String username,String userid, String userUrl) {
+    String comment = '';
+    double rating = 5;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Rate my shop"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("How do you feel about my shop?"),
+              SizedBox(height: 10),
+              RatingBar.builder(
+                initialRating: rating,
+                minRating: 1,
+                direction: Axis.horizontal,
+                allowHalfRating: false,
+                itemCount: 5,
+                itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+                itemBuilder: (context, _) => Icon(
+                  Icons.star,
+                  color: Colors.amber,
+                ),
+                onRatingUpdate: (value) {
+                  rating = value;
+                },
+              ),
+              SizedBox(height: 15),
+              TextField(
+                maxLines: 3,
+                onChanged: (value) => comment = value,
+                decoration: InputDecoration(
+                  hintText: "Share your thoughts...",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancelled"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (comment.trim().isEmpty) return;
+                final prefs = await SharedPreferences.getInstance();
+                final uid = prefs.getString('uid');
+                FirebaseFirestore.instance.collection('shop_comments').add({
+                  'userId': uid, // Gắn uid thực tế nếu có auth
+                  'username': username,
+                  'avatarUrl': userUrl, // Nếu có avatar
+                  'content': comment.trim(),
+                  'rating': rating,
+                  'timestamp': DateTime.now(),
+                });
+
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Thanks for your rating!")),
+                );
+              },
+              child: Text("Send"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
 }
 

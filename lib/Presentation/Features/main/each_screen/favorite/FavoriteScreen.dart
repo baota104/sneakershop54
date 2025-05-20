@@ -1,9 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductCard.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/favor_bloc.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/favor_event.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/home/Home_product_bloc.dart';
+import 'package:sneaker_shop/Presentation/Widgets/LoadingWidget.dart';
 import 'package:sneaker_shop/domains/model/UserModel.dart';
+
+import '../../../../../domains/model/FavoriteModel.dart';
+import '../home/Home_state.dart';
+import 'favor_state.dart';
 
 class FavoriteScreen extends StatefulWidget {
   const FavoriteScreen({super.key});
@@ -14,41 +23,15 @@ class FavoriteScreen extends StatefulWidget {
 
 class _FavoriteScreenState extends State<FavoriteScreen> {
   UserModel? userModel;
-  Future<UserModel?> fetchUser(String uid)async{
-    try{
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('Users')
-            .doc(uid)
-            .get();
+  late FavorBloc bloc;
+  late List<FavoriteModel> favoritemodel;
 
-        if (userDoc.exists) {
-          Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
-          return UserModel.fromMap(data);
-        }
-        return null;
-    }
-    catch(e){
-      print(e.toString());
-      return null;
-    }
-  }
-  Future<void> _iniuser()async{
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? uid = prefs.getString('uid');
-    if (uid != null) {
-      final user = await fetchUser(uid);
-      print(user);
-      setState(() {
-        userModel = user;
-      });
-
-    }
-  }
 @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _iniuser();
+    bloc = context.read<FavorBloc>();
+    bloc.add(FetchListFavor());
   }
   @override
   Widget build(BuildContext context) {
@@ -74,34 +57,61 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
           ),
         ],
       ),
-      body: Container(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // Hiển thị 2 cột
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.75, // Tỷ lệ chiều cao / chiều rộng
-              ),
-              itemCount: 8, // Số lượng sản phẩm yêu thích
-              itemBuilder: (context, index) {
-                return null;
-              },
-            ),
-        ),
-      ),
+      body: BlocConsumer<FavorBloc, FavorStateBase>(
+    bloc: bloc,
+    listener: (context, state) {
+      if(state is deleteFavorrSuccess){
+        print("delete thanh cong");
+        bloc.add(FetchListFavor());
+      }
+      else if(state is deleteFavorError){
+        print(state.message);
+      }
+
+    },
+  builder: (context, state) {
+    if(state is FetchListFavorrSuccess){
+      return _buildfavorscreen(state.listFavor);
+    }
+    else if(state is FetchListlistFavorError){
+      return Center(child: Text(state.message),);
+    }
+    else if(state is FavorStateLoading){
+      return Center(child: LoadingWidet(),);
+    }
+    return Container();
+  },
+),
     );
   }
 
-  Widget _productcard(Favoritesitems item){
+  Widget _buildfavorscreen(List<FavoriteModel> list){
+  return Container(
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2, // Hiển thị 2 cột
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.75, // Tỷ lệ chiều cao / chiều rộng
+        ),
+        itemCount: list.length, // Số lượng sản phẩm yêu thích
+        itemBuilder: (context, index) {
+          return _productcard(list.elementAt(index));
+        },
+      ),
+    ),
+  );
+  }
+  Widget _productcard(FavoriteModel item){
     return LayoutBuilder(
       builder: (context, constraints) {
         double width = constraints.maxWidth * 0.9;
         double imageSize = width * 0.8;
-        double fontSize = width * 0.1;
+        double fontSize = width * 0.08;
 
-        return Container(
+        return  Container(
           width: width,
           padding: EdgeInsets.all(width * 0.07),
           decoration: BoxDecoration(
@@ -116,18 +126,42 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             ],
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Nút yêu thích (heart icon)
               Align(
-                  child: Icon(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text("Xác nhận"),
+                        content: Text("Bạn có chắc muốn xoá sản phẩm này khỏi yêu thích?"),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: Text("Không"),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: Text("Xoá", style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      bloc.add(deleteFavor(item.pro_id));
+                    }
+                  },
+                  icon: Icon(
                     Icons.favorite,
                     color: Colors.pink,
                     size: fontSize * 1.2,
                   ),
+                ),
               ),
               SizedBox(height: 4),
-              // Ảnh sản phẩm
               Center(
                 child: Image.network(
                   item.imageUrl,
@@ -142,7 +176,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                 ),
               ),
               SizedBox(height: 8),
-              // Nhãn sản phẩm (nếu có)
               if (item.activity.isNotEmpty)
                 Text(
                   item.activity.toUpperCase(),
@@ -154,7 +187,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                   ),
                 ),
               SizedBox(height: 4),
-              // Tên sản phẩm
               Text(
                 item.name,
                 style: TextStyle(
@@ -162,11 +194,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                   fontWeight: FontWeight.bold,
                   fontFamily: GoogleFonts.raleway().fontFamily,
                 ),
-                maxLines: 2, // Giới hạn số dòng hiển thị
-                overflow: TextOverflow.ellipsis, // Hiển thị "..." nếu bị tràn
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              Spacer(),
-              // Giá sản phẩm (hiển thị giá giảm nếu có)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -178,7 +208,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                       fontFamily: GoogleFonts.poppins().fontFamily,
                     ),
                   ),
-
                 ],
               ),
             ],

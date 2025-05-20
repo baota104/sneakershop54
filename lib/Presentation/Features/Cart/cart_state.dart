@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../domains/model/CartModel.dart';
 
-enum CartStatus { initial, loading, success , updateSuccess , createSuccess ,addSuccess, deleteSuccess,orderSuccess,orderError, failure }
+enum CartStatus { initial, loading, success , updateSuccess , createSuccess ,addSuccess, deleteSuccess,orderSuccess,orderError,paymentSuccess,paymentError,addtofavoritesuccess,addtofavoriteerror, failure }
 
 class CartState extends Equatable {
   CartStatus? status = null;
@@ -32,6 +32,13 @@ class CartState extends Equatable {
   CartState.createOrderSuccess() : this._(status : CartStatus.orderSuccess);
   CartState.createOrderError({required String? message}) : this._(message : message,status : CartStatus.orderError);
   CartState.productoutofstock({required String? message}) : this._(message : message,status : CartStatus.orderError);
+  CartState.createPaymentSuccess() : this._(status : CartStatus.paymentSuccess);
+  CartState.createPaymentError({required String? message}) : this._(message : message,status : CartStatus.paymentError);
+  CartState.addtofavoriteSuccess() : this._(status : CartStatus.addtofavoritesuccess);
+  CartState.addtofavoriteerror({required String? message}) : this._(message : message,status : CartStatus.addtofavoriteerror);
+
+
+
 
   @override
   List<Object?> get props => [status,cartModel,message];

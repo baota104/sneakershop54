@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
+import 'package:sneaker_shop/domains/model/FavoriteModel.dart';
 import 'package:sneaker_shop/domains/model/OrderModel.dart';
+import 'package:sneaker_shop/domains/model/PaymentModel.dart';
+import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
 abstract class CartEventBase extends Equatable {
   const CartEventBase();
@@ -45,4 +48,19 @@ class AddItemtoCart extends CartEventBase {
 class ResetCartStatus extends CartEventBase{
   @override
   List<Object?> get props => [];
+}
+class CreatePayment extends CartEventBase {
+  final PaymentModel paymentModel;
+
+  const CreatePayment({required this.paymentModel});
+
+  @override
+  List<Object?> get props => [paymentModel];
+}
+class AddtoFavorite extends CartEventBase{
+  final ProductModel productModel;
+
+  const AddtoFavorite(this.productModel);
+  @override
+  List<Object?> get props => [productModel];
 }

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:sneaker_shop/domains/model/CommentModel.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
 abstract class HomeStateBase extends Equatable{}
@@ -40,4 +41,22 @@ class FetchListProductError extends HomeStateBase{
   List<Object?> get props => [message];
 
 }
+class FetchCommentSuccess extends HomeStateBase{
+  late List<CommentModel> comments;
 
+  FetchCommentSuccess(this.comments);
+  @override
+  List<Object?> get props => [comments];
+}
+class FetchCommentError extends HomeStateBase{
+
+  late String message;
+
+  FetchCommentError(String message){
+    this.message = message;
+  }
+
+@override
+List<Object?> get props => [message];
+
+}

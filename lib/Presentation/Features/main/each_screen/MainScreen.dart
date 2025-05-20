@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
 import 'package:sneaker_shop/Presentation/Features/Product/ProductDetail.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/favor_bloc.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/home/Home_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/Menu_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/FavoriteScreen.dart';
@@ -12,7 +13,9 @@ import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/Profile_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/search/SearchScreen.dart';
 import 'package:sneaker_shop/domains/data_source/remote/firebase/cart_firebase.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/favorite_firebase.dart';
 import 'package:sneaker_shop/domains/repository/cart_repository.dart';
+import 'package:sneaker_shop/domains/repository/favorite_repository.dart';
 
 import '../../../../domains/data_source/remote/firebase/product_firebase.dart';
 import '../../../../domains/repository/product_repository.dart';
@@ -28,6 +31,7 @@ class MainScreen extends StatelessWidget {
       providers: [
         Provider(create: (context) => Productfirebase()),
         Provider(create: (context) => CartFirebase()),
+        Provider(create: (context) => FavoriteFirebase()),
         ProxyProvider<Productfirebase, ProductRepository>(
           update: (context, productFirebase, _) => ProductRepository(productFirebase),
         ),
@@ -35,6 +39,15 @@ class MainScreen extends StatelessWidget {
         ProxyProvider<ProductRepository, HomeProductBloc>(
           update: (context, repository, _) => HomeProductBloc(repository),
         ),
+
+
+        ProxyProvider<FavoriteFirebase, FavoriteRepository>(
+          update: (context, favoriteFirebase, _) => FavoriteRepository(favoriteFirebase),
+        ),
+        ProxyProvider<FavoriteRepository, FavorBloc>(
+          update: (context, repository, _) => FavorBloc(repository),
+        ),
+
 
         ProxyProvider<CartFirebase, CartRepository>(
           update: (context, cartFirebase, _) => CartRepository(cartFirebase),
@@ -70,7 +83,7 @@ class _MainScreenBodyState extends State<MainScreenBody> {
       Searchscreen(),
       FavoriteScreen(),
       NotificationscreenContainer(),
-     ProfileScreen()
+     ProfilescreenContainer()
     ];
   }
 

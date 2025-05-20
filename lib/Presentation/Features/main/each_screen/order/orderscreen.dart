@@ -1,12 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/order/order_bloc.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/cart_firebase.dart';
 import 'package:sneaker_shop/domains/data_source/remote/firebase/order_firebase.dart';
 import 'package:sneaker_shop/domains/model/OrderModel.dart';
 import 'package:sneaker_shop/domains/repository/order_repository.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../../../domains/model/PaymentModel.dart';
 import '../../../../Widgets/LoadingWidget.dart';
 import 'order_event.dart';
 import 'orderstate.dart';
@@ -40,6 +44,7 @@ class Orderscreen extends StatefulWidget {
 
 class _OrderscreenState extends State<Orderscreen> {
   late OrderBloc orderBloc;
+  final CartFirebase _cartFirebase = CartFirebase();
   late List<OrderModel> listorder;
   String selectedStatus = 'all'; // Giá trị mặc định
   List<String> allStatuses = ['all', 'pending', 'confirmed', 'shipping', 'completed', 'cancelled'];
@@ -63,7 +68,6 @@ class _OrderscreenState extends State<Orderscreen> {
         listener: (context, state) {
           if (state is FetchListOrderSuccess) {
             setState(() {
-
               listorder = state.listOrder;
             });
           }
@@ -260,9 +264,9 @@ class _OrderscreenState extends State<Orderscreen> {
                     //   children: [
                         Center(
                           child: TextButton(
-                            onPressed: () => _updateOrderStatus(order.orderId, 'cancelled'),
+                            onPressed: () => _updateOrderStatus(order.orderId, 'cancelled','confirmed'),
                             style: TextButton.styleFrom(foregroundColor: Colors.red),
-                            child: Text('Hủy đơn'),
+                            child: Text('Cancelled order'),
                           ),
                         ),
 
@@ -273,6 +277,31 @@ class _OrderscreenState extends State<Orderscreen> {
                     //     ),
                     //   ],
                     // ),
+                  if(order.status.toLowerCase() == 'shipping')
+                    Center(
+                      child: TextButton(
+                        onPressed:(){
+                          _updateOrderStatus(order.orderId, 'completed','shipping');
+                          var uuid = Uuid();
+                          String paymentId = uuid.v4();
+                          PaymentModel paymentModel = PaymentModel(paymentId: paymentId, orderId: order.orderId, userId: order.userId, paymentMethod: order.paymentmethod, paymentStatus: "completed", totalamount: order.totalAmount, createdAt: order.time);
+                          _cartFirebase.createPayment(paymentModel);
+                          createOrderNotificationtocomment(orderId: order.orderId, userId: order.userId, newStatus: "completed", imageUrl: order.orderDetails.elementAt(0).imageUrl);
+        },
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        child: Text('Received orders'),
+                      ),
+                    ),
+                  if(order.status.toLowerCase() == 'completed')
+                    Center(
+                      child: TextButton(
+                        onPressed:(){
+                          _updateOrderStatus(order.orderId, 'cancelled','completed');
+                        },
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        child: Text('Return'),
+                      ),
+                    ),
 
                 ],
               ],
@@ -282,25 +311,55 @@ class _OrderscreenState extends State<Orderscreen> {
       },
     );
   }
-  void _updateOrderStatus(String orderId, String newStatus) async {
+  void _updateOrderStatus(String orderId, String newStatus,String status) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Xác nhận'),
+        title: Text('Confirm'),
         content: Text(
-          newStatus == 'cancelled'
-              ? 'Bạn có chắc muốn hủy đơn hàng này không?'
-              : 'Bạn đã nhận được hàng?',
+          choosestatus(status, newStatus)
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Không')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Có')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('No')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Yes')),
         ],
       ),
     );
 
     if (confirm == true) {
       orderBloc.add(UpdateOrderstatus(orderId,newStatus));
+    }
+  }
+  String choosestatus(String status, String newstatus){
+    if(status == "shipping" && newstatus == "completed"){
+      return "Have you received the order?";
+    }
+    else if(status == 'confirmed' && newstatus == "cancelled" ){
+      return "Do you want to cancelled the order";
+    }
+    else if(status == "completed" && newstatus == "cancelled"){
+      return "Do you want to return the order?";
+    }
+    else return "";
+  }
+  Future<void> createOrderNotificationtocomment({
+    required String orderId,
+    required String userId,
+    required String newStatus,
+    required String imageUrl,
+  }) async {
+    try {
+      final message = "your order has been completed,let us know what you thought";
+      await FirebaseFirestore.instance.collection('Notifications').add({
+        'orderId':orderId,
+        'user_id': userId,
+        'message': message,
+        'imageUrl': imageUrl,
+        'is_read': false,
+        'time': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Lỗi tạo thông báo: $e");
     }
   }
 

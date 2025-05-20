@@ -50,6 +50,11 @@ dependencies:
   firebase_storage: ^12.4.4
   google_sign_in: ^6.3.0
   uuid: ^4.0.0
+  flutter_rating_bar: ^4.0.1
+  flutter_stripe: ^11.5.0
+  http: ^1.4.0
+
+
 
 dev_dependencies:
   flutter_test:

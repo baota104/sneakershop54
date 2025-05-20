@@ -74,12 +74,42 @@ class CartBloc extends Bloc<CartEventBase,CartState>{
       }
     });
     // cart_bloc.dart
+    on<CreatePayment>((event, emit) async {
+      try {
+        emit(CartState.cartLoading());
+        bool check = await  _cartRepository.createpayment(event.paymentModel);
+        if(check){
+          emit(CartState.createPaymentSuccess());
+        }
+        else{
+          emit(CartState.createOrderError(message: "system error"));
+        }
+      } catch (e) {
+        emit(CartState.createOrderError(message: e.toString()));
+      }
+    });
+    on<AddtoFavorite>((event, emit) async {
+      try {
+        emit(CartState.cartLoading());
+        bool check = await  _cartRepository.addtofavorite(event.productModel);
+        if(check){
+          emit(CartState.addtofavoriteSuccess());
+        }
+        else{
+          emit(CartState.addtofavoriteerror(message: "system error"));
+        }
+      } catch (e) {
+        emit(CartState.addtofavoriteerror(message: e.toString()));
+      }
+    });
+    // cart_bloc.dart
     on<ResetCartStatus>((event, emit) {
       emit(state.copyWith(status: CartStatus.initial));
     });
 
-
   }
+
+
 
 }
 

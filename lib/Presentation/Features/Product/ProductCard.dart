@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_event.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/user_firebase.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
 import '../../../domains/model/CartModel.dart';
@@ -21,6 +22,7 @@ class ProductCard extends StatefulWidget {
 class _ProductCardState extends State<ProductCard> {
   late bool isLoved; // Trạng thái yêu thích
   late CartBloc cartBloc;
+  final UserFirebase _userFirebase= UserFirebase();
 
   @override
   void initState() {
@@ -29,11 +31,34 @@ class _ProductCardState extends State<ProductCard> {
     cartBloc = context.read<CartBloc>();
   }
 
-  void toggleLove() {
-    setState(() {
-      isLoved = !isLoved;
-    });
+  void toggleLove() async {
+    final shouldAdd = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Add to favorite?"),
+        content: Text("Do you want to add this item to your list?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text("Canceled"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text("OK"),
+          ),
+        ],
+      ),
+    );
+    final bool check ;
+    if (shouldAdd == true) {
+      setState(() {
+        cartBloc.add(AddtoFavorite(widget.product));
+        isLoved = true;
+      });
+
+    }
   }
+
 
 
   @override
@@ -64,7 +89,7 @@ class _ProductCardState extends State<ProductCard> {
                   Align(
                     alignment: Alignment.topRight,
                     child: GestureDetector(
-                      onTap: toggleLove,
+                      onTap:()=> toggleLove(),
                       child: Icon(
                         isLoved ? Icons.favorite : Icons.favorite_border,
                         color: isLoved ? Colors.pink : Colors.black,

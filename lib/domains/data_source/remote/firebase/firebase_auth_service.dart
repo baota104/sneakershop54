@@ -80,23 +80,36 @@ class FirebaseAuthService {
 
       if (user != null) {
         final FirebaseFirestore firestore = FirebaseFirestore.instance;
-        // Tạo tài khoản người dùng trong Firestore
-        await firestore.collection("Users").doc(user.uid).set({
-          "uid": user.uid,
-          "email": user.email,
-          "name": name,
-          "phone": "",
-          "address": "",
-        });
+        final userDocRef = firestore.collection("Users").doc(user.uid);
+        final userSnapshot = await userDocRef.get();
 
-        // Tạo giỏ hàng rỗng tương ứng
-        await firestore.collection("Carts").doc(user.uid).set({
-          "cart_id": user.uid,
-          "user_id": user.uid,
-          // "cart_items": [],
-        });
+        if (!userSnapshot.exists) {
+          // Tạo tài khoản người dùng mới trong Firestore nếu chưa có
+          await userDocRef.set({
+            "uid": user.uid,
+            "email": user.email,
+            "name": name,
+            "phone": "",
+            "address": "",
+            "ImageUrl":"https://bookvexe.vn/wp-content/uploads/2023/04/chon-loc-25-avatar-facebook-mac-dinh-chat-nhat_2.jpg"
+          });
 
-        print(" Đăng ký + tạo giỏ hàng thành công cho user: ${user.email}");
+          // Tạo giỏ hàng rỗng tương ứng
+          final cartDocRef = firestore.collection("Carts").doc(user.uid);
+          final cartSnapshot = await cartDocRef.get();
+
+          if (!cartSnapshot.exists) {
+            await cartDocRef.set({
+              "cart_id": user.uid,
+              "user_id": user.uid,
+            });
+          }
+
+          print("Đăng ký + tạo giỏ hàng thành công cho user: ${user.email}");
+        } else {
+          print("User đã tồn tại trong Firestore. Không cần tạo lại.");
+        }
+
         return user;
       }
 

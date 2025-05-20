@@ -1,11 +1,40 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/Changepass_Screen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/Edit_infoScreen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/user_bloc.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/user_event.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/user_state.dart';
+import 'package:sneaker_shop/Presentation/Widgets/LoadingWidget.dart';
 import 'package:sneaker_shop/domains/data_source/remote/firebase/user_firebase.dart';
 import 'package:sneaker_shop/domains/model/UserModel.dart';
+
+import '../../../../../domains/repository/user_repository.dart';
+
+class ProfilescreenContainer extends StatelessWidget {
+  const ProfilescreenContainer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return  MultiProvider(
+      providers: [
+        Provider(create: (context) => UserFirebase()),
+        ProxyProvider<UserFirebase, UserRepository>(
+          update: (context, userFirebase, _) => UserRepository(userFirebase),
+        ),
+        ProxyProvider<UserRepository, UserBloc>(
+          update: (context, repository, _) => UserBloc(repository),
+        ),
+      ],
+      child: ProfileScreen(),
+    );
+  }
+}
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -17,11 +46,13 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String? userId;
   Map<String, dynamic>? userData;
-  UserModel? userModel;
+  late UserModel userModel;
+  late UserBloc userBloc;
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    userBloc = context.read<UserBloc>();
+    userBloc.add(GetUser());
   }
 
   /// Lấy UID từ SharedPreferences và truy vấn Firestore
@@ -56,26 +87,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-      body: userModel == null
-          ? Center(child: CircularProgressIndicator()) // Hiển thị loading nếu chưa có dữ liệu
-          : SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _buildprofile(),
-            _builditemfield("Your Name", userModel!.name  ?? "N/A"),
-            SizedBox(height: 5),
-            _builditemfield("Email Address", userModel!.email ?? "N/A"),
-            SizedBox(height: 5),
-            _builditemfield("Phone Number", userModel!.phone ?? "N/A"),
-            SizedBox(height: 5),
-            _builditemfield("Address", userModel!.address ?? "N/A"),
-            SizedBox(height: 25),
-            _buildpassfield(),
-            _buildeditbutton(),
-          ],
-        ),
+      body: BlocConsumer<UserBloc, UserStateBase>(
+        bloc: userBloc,
+        listener: (context, state) {
+
+   if(state is GetUserSuccess){
+     setState(() {
+       userModel = state.userModel;
+     });
+   }
+  },
+  builder: (context, state) {
+  if(state is GetUserSuccess){
+    print("getsuccess");
+    return _buildprofilescreen();
+  }
+  else if(state is GetUserError){
+    print("loi fetch user");
+    return Container();
+  }
+  else if(state is UserStateLoading){
+    return Center(child: LoadingWidet(),);
+  }
+  return Container();
+
+  },
+),
+    );
+  }
+
+  Widget _buildprofilescreen(){
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _buildprofile(),
+          _builditemfield("Your Name", userModel!.name  ?? "N/A"),
+          SizedBox(height: 5),
+          _builditemfield("Email Address", userModel!.email ?? "N/A"),
+          SizedBox(height: 5),
+          _builditemfield("Phone Number", userModel!.phone ?? "N/A"),
+          SizedBox(height: 5),
+          _builditemfield("Address", userModel!.address ?? "N/A"),
+          SizedBox(height: 25),
+          _buildpassfield(),
+          _buildeditbutton(),
+        ],
       ),
     );
   }
@@ -90,8 +148,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
           ),
-          child: Image.asset(
-            "assets/images/baodeptrai.png",
+          child: Image.network(
+           userModel == null ? "https://bookvexe.vn/wp-content/uploads/2023/04/chon-loc-25-avatar-facebook-mac-dinh-chat-nhat_2.jpg":userModel!.imageurl ,
             fit: BoxFit.cover,
           ),
         ),
@@ -206,9 +264,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       width: double.infinity,
       child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-                context, MaterialPageRoute(builder: (context) => EditInfoscreen(userData: userModel!,)));
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+                MaterialPageRoute(
+                  builder: (context) => BlocProvider.value(
+                    value: userBloc,
+                    child: EditInfoscreen(userData: userModel),
+                  ),
+                ),
+            );
+
+            if (result == true) {
+              // Gửi lại event để reload dữ liệu người dùng
+              context.read<UserBloc>().add(GetUser());
+            }
+
           },
           style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF0D6EFD),

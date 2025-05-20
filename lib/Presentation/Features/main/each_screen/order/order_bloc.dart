@@ -39,8 +39,10 @@ class OrderBloc extends Bloc<OrderEventBase,OrderStateBase>{
           String ss = event.status;
           if(check){
             emit(UpdateorderSuccess());
+            if(event.status == "cancelled") {
             _repository.updateStockWhenCancelled(event.ordid);
           }
+        }
           else{
             emit(UpdateorderError("error when $ss the order )"));
           }

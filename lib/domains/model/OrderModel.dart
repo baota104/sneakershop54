@@ -8,6 +8,7 @@ class OrderModel{
   String orderId;
   String userId;
   String status;
+  String paymentmethod;
   double totalAmount;
   List<OrderDetail> orderDetails;
   DateTime time;
@@ -17,6 +18,7 @@ class OrderModel{
     required this.orderId,
     required this.userId,
     required this.status,
+    required this.paymentmethod,
     required this.totalAmount,
     required this.orderDetails,
     required this.time,
@@ -28,6 +30,7 @@ class OrderModel{
       orderId: map['orderId'] ?? '',
       userId: map['user_id'] ?? '',
       status: map['status'] ?? '',
+      paymentmethod: map['paymentmethod']??'',
       time: (map['time'] as Timestamp).toDate(),
       totalAmount: map['total_amout'] ?? 0,
       orderDetails: List<OrderDetail>.from(
@@ -42,6 +45,7 @@ class OrderModel{
       'orderId': orderId,
       'user_id': userId,
       'status': status,
+      'paymentmethod':paymentmethod,
       'time': Timestamp.fromDate(time),
       'total_amout': totalAmount,
       'order_details': orderDetails.map((item) => item.toMap()).toList(),

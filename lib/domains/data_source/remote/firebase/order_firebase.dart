@@ -42,6 +42,7 @@ class Orderfirebase{
           orderId: orderId,
           userId: data['user_id'] ?? '',
           status: data['status'] ?? '',
+          paymentmethod: data['paymentmethod'] ?? '',
           totalAmount: (data['total_amout'] ?? 0).toDouble(),
           orderDetails: orderDetails,
           time: (data['time'] as Timestamp).toDate(),

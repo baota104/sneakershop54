@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
+import '../../../model/CommentModel.dart';
+
 class Productfirebase {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -8,7 +10,6 @@ class Productfirebase {
     try {
       // Lấy dữ liệu từ Firestore
       QuerySnapshot snapshot = await _firestore.collection("Products").get();
-
       // Chuyển đổi dữ liệu Firestore thành danh sách ProductModel
       List<ProductModel> products = snapshot.docs.map((doc) {
         return ProductModel.fromMap({
@@ -24,5 +25,23 @@ class Productfirebase {
       throw Exception("Không thể lấy danh sách sản phẩm");
     }
   }
+
+
+  Future<List<CommentModel>> fetchAllComments() async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('shop_comments')
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => CommentModel.fromMap(doc.data()))
+          .toList();
+    } catch (e) {
+      print('Error fetching comments: $e');
+      return [];
+    }
+  }
+
 
 }

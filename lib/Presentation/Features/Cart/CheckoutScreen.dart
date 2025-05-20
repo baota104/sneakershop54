@@ -5,9 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_event.dart';
+import 'package:sneaker_shop/Presentation/Widgets/LoadingWidget.dart';
+import 'package:sneaker_shop/domains/data_source/remote/firebase/user_firebase.dart';
 import 'package:sneaker_shop/domains/model/CartModel.dart';
 import 'package:sneaker_shop/domains/model/OrderDetail.dart';
 import 'package:sneaker_shop/domains/model/OrderModel.dart';
+import 'package:sneaker_shop/domains/model/PaymentModel.dart';
+import 'package:sneaker_shop/domains/model/UserModel.dart';
 import 'package:uuid/uuid.dart';
 
 import '../main/each_screen/MainScreen.dart';
@@ -37,10 +41,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool isEditingPhone = false;
   String? userId;
   Map<String, dynamic>? userData;
-  TextEditingController emailController = TextEditingController(text: "bao@gmail.com");
-  TextEditingController phoneController = TextEditingController(text: "+084-113");
+  TextEditingController emailController = TextEditingController();
+  TextEditingController phoneController = TextEditingController();
+  TextEditingController addressController = TextEditingController();
   late CartBloc cartBloc;
-
+  String selectedPaymentMethod = "Cash on delivery";
+  bool isExpanded = false;
+  final UserFirebase _userFirebase = UserFirebase();
+  late UserModel _userModel;
+  final _formKey = GlobalKey<FormState>();
   @override
   void initState() {
     super.initState();
@@ -50,36 +59,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
   /// Lấy UID từ SharedPreferences và truy vấn Firestore
   Future<void> _loadUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? uid = prefs.getString('uid');
-
-    print("UID lấy từ SharedPreferences: $uid"); // Kiểm tra UID
-
-    if (uid != null) {
-      setState(() {
-        userId = uid;
-      });
-      try {
-        DocumentSnapshot userDoc =
-        await FirebaseFirestore.instance.collection("Users").doc(uid).get();
-
-        print("Dữ liệu lấy từ Firestore: ${userDoc.data()}"); // Kiểm tra dữ liệu lấy về
-
-        if (userDoc.exists) {
-          setState(() {
-            userData = userDoc.data() as Map<String, dynamic>;
-            emailController.text = userData?["email"] ?? "bao@gmail.com";
-            phoneController.text = userData?["phone"] ?? "+084-113";
-          });
-        } else {
-          print("Không tìm thấy user trong Firestore.");
-        }
-      } catch (e) {
-        print("Lỗi khi lấy dữ liệu từ Firestore: $e");
-      }
-    } else {
-      print("UID chưa được lưu hoặc bị null.");
-    }
+    _userModel = (await _userFirebase.getUser())!;
+    print(_userModel.toString());
+    emailController.text = _userModel.email ?? '';
+    phoneController.text = _userModel.phone ?? '';
+    addressController.text = _userModel.address ?? '';
+    setState(() {}); // trigger rebuild
   }
 
   @override
@@ -92,6 +77,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       appBar: _buildAppBar(context),
       body: BlocConsumer<CartBloc,CartState>(
   listener: (context, state) {
+    // if(state.status == CartStatus.paymentSuccess){
+    //   print("tao payment thanh cong");
+    // }
+    // else{
+    //   print("tao payment that bai")
+    // }
   },
   builder: (context, state) {
     if(state.status == CartStatus.orderSuccess){
@@ -101,7 +92,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       });
     }
     else if(state.status == CartStatus.orderError){
-
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(state.message.toString()),
@@ -109,15 +99,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ));
       });
     }
-    else{
-      // WidgetsBinding.instance.addPostFrameCallback((_) {
-      //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      //     content: Text(state.message.toString()),
-      //     backgroundColor: Colors.green,
-      //   ));
-      // });
-
-    }
+    // else{
+    //   return Center(child: LoadingWidet(),);
+    // }
     return Container(
         color: Color(0xFFF7F7F9),
             child: Column(
@@ -155,14 +139,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       margin: EdgeInsets.symmetric(horizontal:screenWidth * 0.05 ),
       color: Colors.white,
       child: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildContactInfo(screenWidth),
-            SizedBox(height: screenHeight * 0.02),
-            _buildAddress(screenWidth),
-            SizedBox(height: screenHeight * 0.02),
-            _buildPaymentMethod(screenWidth),
-          ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              _buildContactInfo(screenWidth),
+              SizedBox(height: screenHeight * 0.02),
+              _buildAddress(screenWidth),
+              SizedBox(height: screenHeight * 0.02),
+              _buildPaymentMethod(screenWidth),
+            ],
+          ),
         ),
       ),
     );
@@ -195,20 +182,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       IconData icon, String label, TextEditingController controller, bool isEditing, VoidCallback onEdit, double fontSize) {
     return ListTile(
       leading: Icon(icon, color: Colors.black, size: fontSize * 1.2),
-      title: isEditing
-          ? TextFormField(
-        controller: controller,
-        style: TextStyle(fontSize: fontSize,
+        title: isEditing
+            ? TextFormField(
+          controller: controller,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return '$label is required';
+            }
+            if (label == "Email" && !RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
+              return 'Enter a valid email';
+            }
+            if (label == "Phone" && !RegExp(r'^\d{9,11}$').hasMatch(value)) {
+              return 'Enter a valid phone number';
+            }
+            return null;
+          },
+          style: TextStyle(
+            fontSize: fontSize,
+            fontFamily: GoogleFonts.poppins().fontFamily,
+          ),
+          decoration: InputDecoration(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+          ),
+        )
+            : Text(controller.text, style: TextStyle(fontSize: fontSize,
           fontFamily: GoogleFonts.poppins().fontFamily,
-        ),
-        decoration: InputDecoration(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-        ),
-      )
-          : Text(controller.text, style: TextStyle(fontSize: fontSize,
-        fontFamily: GoogleFonts.poppins().fontFamily,
-      )),
+        )),
       subtitle: Text(label, style: TextStyle(color: Colors.grey, fontSize: fontSize * 0.9)),
       trailing: IconButton(
         icon: Icon(Icons.edit, color: Colors.grey, size: fontSize),
@@ -218,26 +218,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
   Widget _buildAddress(double screenWidth) {
     double fontSize = screenWidth * 0.04;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Address", style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize,
-          fontFamily: GoogleFonts.raleway().fontFamily,
-        )),
-        ListTile(
-          leading: Icon(Icons.location_on_rounded, color: Colors.black, size: fontSize * 1.2),
-          title: Text(userData!= null?userData!["address"]:"Nhan Chinh, Hanoi", style: TextStyle(fontSize: fontSize,
-            fontFamily: GoogleFonts.poppins().fontFamily,
-          )),
-          subtitle: Text("View Map", style: TextStyle(color: Colors.grey, fontSize: fontSize * 0.9,
+        Text(
+          "Address",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: fontSize,
             fontFamily: GoogleFonts.raleway().fontFamily,
-          )),
-          trailing: Icon(Icons.arrow_drop_down, color: Colors.grey, size: fontSize),
+          ),
         ),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.asset("assets/images/map1.png",
-              width: double.infinity, height: screenWidth * 0.4, fit: BoxFit.cover),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(Icons.location_on_rounded, color: Colors.black, size: fontSize * 1.2),
+          title: TextFormField(
+            controller: addressController,
+            validator: (String? value) {
+              if (value == null || value.isEmpty) {
+                return "Address is required";
+              }
+            },
+            decoration: InputDecoration(
+              hintText: "Enter your address",
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            style: TextStyle(fontSize: fontSize, fontFamily: GoogleFonts.poppins().fontFamily),
+          ),
+          trailing: IconButton(
+            icon: Icon(Icons.check, color: Colors.green, size: fontSize * 1.2),
+            onPressed: () {
+              // setState(() {
+              //   // Gán lại dữ liệu nếu muốn lưu
+              //   userData ??= {};
+              //   userData!["address"] = _addressController.text;
+              // });
+            },
+          ),
         ),
       ],
     );
@@ -245,21 +264,65 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildPaymentMethod(double screenWidth) {
     double fontSize = screenWidth * 0.04;
+
+    final List<Map<String, String>> methods = [
+      {"name": "e-banking", "details": "**** 0543"},
+      {"name": "Momo", "details": "0988***123"},
+      {"name": "ZaloPay", "details": "zalo_user_abc"},
+      {"name": "Cash on delivery", "details": "COD"},
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Payment Method", style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize,
-          fontFamily: GoogleFonts.raleway().fontFamily,
-        )),
-        ListTile(
-          leading: Icon(Icons.credit_card, color: Colors.black, size: fontSize * 1.2),
-          title: Text("MB Bank", style: TextStyle(fontSize: fontSize)),
-          subtitle: Text("**** 0543", style: TextStyle(color: Colors.grey, fontSize: fontSize * 0.9)),
-          trailing: Icon(Icons.arrow_drop_down, color: Colors.grey, size: fontSize),
+        Text(
+          "Payment Method",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: fontSize,
+            fontFamily: GoogleFonts.raleway().fontFamily,
+          ),
         ),
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              isExpanded = !isExpanded;
+            });
+          },
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.credit_card, color: Colors.black, size: fontSize * 1.2),
+            title: Text(selectedPaymentMethod, style: TextStyle(fontSize: fontSize)),
+            subtitle: Text("Chạm để chọn phương thức khác", style: TextStyle(color: Colors.grey, fontSize: fontSize * 0.9)),
+            trailing: Icon(
+              isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+              color: Colors.grey,
+              size: fontSize * 1.2,
+            ),
+          ),
+        ),
+        if (isExpanded)
+          Column(
+            children: methods
+                .where((method) => method["name"] != selectedPaymentMethod)
+                .map((method) => ListTile(
+              contentPadding: EdgeInsets.only(left: screenWidth * 0.12),
+              title: Text(method["name"]!, style: TextStyle(fontSize: fontSize)),
+              subtitle: Text(method["details"]!, style: TextStyle(color: Colors.grey, fontSize: fontSize * 0.9)),
+              onTap: () {
+                setState(() {
+                  selectedPaymentMethod = method["name"]!;
+                  isExpanded = false;
+                });
+              },
+            ))
+                .toList(),
+          ),
       ],
     );
   }
+
+
 
   Widget _buildTotalCost(double screenWidth, double screenHeight) {
     return Container(
@@ -309,18 +372,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
-          var uuid = Uuid();
-          String orderId = uuid.v4(); // tạo chuỗi id ngẫu nhiên
-          String userId = widget.cartItem.user_id; // lấy userId từ cart
-          DateTime time = DateTime.now();
-          String addresss = "nhanchinh";
-          List<OrderDetail> orderdetail = [];
-          for (var i in widget.cartItem.cart_items){
-            var ord = OrderDetail(productId: i.pro_id, name: i.name, imageUrl: i.imageUrl, price: i.price, discountprice: i.discountprice);
-            orderdetail.add(ord);
+          if (_formKey.currentState!.validate()) {
+            var uuid = Uuid();
+            String orderId = uuid.v4();
+            String userId = widget.cartItem.user_id;
+            DateTime time = DateTime.now();
+            String address = addressController.text;
+
+            List<OrderDetail> orderdetail = widget.cartItem.cart_items.map((i) {
+              return OrderDetail(
+                productId: i.pro_id,
+                name: i.name,
+                imageUrl: i.imageUrl,
+                price: i.price,
+                discountprice: i.discountprice,
+              );
+            }).toList();
+
+            var orderModel = OrderModel(
+              orderId: orderId,
+              userId: userId,
+              status: "pending",
+              paymentmethod: selectedPaymentMethod,
+              totalAmount: widget.totalCost,
+              orderDetails: orderdetail,
+              time: time,
+              address: address,
+            );
+
+            cartBloc.add(CreateOrder(orderModel: orderModel));
+            if(selectedPaymentMethod != "Cash on delivery"){
+              var uuid = Uuid();
+              String paymentId = uuid.v4();
+              PaymentModel paymentModel = PaymentModel(paymentId: paymentId, orderId: orderId, userId: userId, paymentMethod: selectedPaymentMethod, paymentStatus: "completed", totalamount: widget.totalCost, createdAt: time);
+              cartBloc.add(CreatePayment(paymentModel: paymentModel));
+            }
           }
-          var orderModel = OrderModel(orderId:orderId, userId: userId, status: "pending", totalAmount: widget.totalCost, orderDetails: orderdetail, time: time, address: addresss);
-         cartBloc.add(CreateOrder(orderModel: orderModel));
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF0D6EFD),
