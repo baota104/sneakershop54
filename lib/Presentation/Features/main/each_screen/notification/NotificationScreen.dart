@@ -273,37 +273,39 @@ class _NotificationScreenState extends State<NotificationScreen> {
       builder: (context) {
         return AlertDialog(
           title: Text("Rate my shop"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("How do you feel about my shop?"),
-              SizedBox(height: 10),
-              RatingBar.builder(
-                initialRating: rating,
-                minRating: 1,
-                direction: Axis.horizontal,
-                allowHalfRating: false,
-                itemCount: 5,
-                itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
-                itemBuilder: (context, _) => Icon(
-                  Icons.star,
-                  color: Colors.amber,
+          content: SingleChildScrollView( // 👈 ADD THIS
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("How do you feel about my shop?"),
+                SizedBox(height: 10),
+                RatingBar.builder(
+                  initialRating: rating,
+                  minRating: 1,
+                  direction: Axis.horizontal,
+                  allowHalfRating: false,
+                  itemCount: 5,
+                  itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+                  itemBuilder: (context, _) => Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                  ),
+                  onRatingUpdate: (value) {
+                    rating = value;
+                  },
                 ),
-                onRatingUpdate: (value) {
-                  rating = value;
-                },
-              ),
-              SizedBox(height: 15),
-              TextField(
-                maxLines: 3,
-                onChanged: (value) => comment = value,
-                decoration: InputDecoration(
-                  hintText: "Share your thoughts...",
-                  border: OutlineInputBorder(),
+                SizedBox(height: 15),
+                TextField(
+                  maxLines: 3,
+                  onChanged: (value) => comment = value,
+                  decoration: InputDecoration(
+                    hintText: "Share your thoughts...",
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -316,12 +318,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 final prefs = await SharedPreferences.getInstance();
                 final uid = prefs.getString('uid');
                 FirebaseFirestore.instance.collection('shop_comments').add({
-                  'userId': uid, // Gắn uid thực tế nếu có auth
+                  'userId': uid,
                   'username': username,
-                  'avatarUrl': userUrl, // Nếu có avatar
+                  'avatarUrl': userUrl,
                   'content': comment.trim(),
                   'rating': rating,
-                  'isvisible':true,
+                  'isvisible': true,
                   'timestamp': DateTime.now(),
                 });
 

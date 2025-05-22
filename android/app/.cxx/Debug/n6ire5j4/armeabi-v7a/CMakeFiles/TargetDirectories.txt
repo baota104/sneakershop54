@@ -1,0 +1,2 @@
+C:/Users/User/AndroidStudioProjects/sneaker_shopp/sneakershop54/android/app/.cxx/Debug/n6ire5j4/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/User/AndroidStudioProjects/sneaker_shopp/sneakershop54/android/app/.cxx/Debug/n6ire5j4/armeabi-v7a/CMakeFiles/rebuild_cache.dir
