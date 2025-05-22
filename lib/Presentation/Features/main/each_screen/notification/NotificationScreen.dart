@@ -321,6 +321,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   'avatarUrl': userUrl, // Nếu có avatar
                   'content': comment.trim(),
                   'rating': rating,
+                  'isvisible':true,
                   'timestamp': DateTime.now(),
                 });
 

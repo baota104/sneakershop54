@@ -5,7 +5,7 @@ import 'package:sneaker_shop/domains/model/CommentModel.dart';
 
 class CommentListWidget extends StatefulWidget {
   final List<CommentModel> commments;
-  const CommentListWidget({super.key,required this.commments});
+  const CommentListWidget({super.key, required this.commments});
 
   @override
   State<CommentListWidget> createState() => _CommentListWidgetState();
@@ -20,10 +20,9 @@ class _CommentListWidgetState extends State<CommentListWidget> {
   @override
   void initState() {
     super.initState();
-    _allComments = widget.commments;
+    // Lọc chỉ các comment có isVisible == true
+    _allComments = widget.commments.where((comment) => comment.ivisible == false).toList();
   }
-
-
 
   void _loadMore() {
     setState(() {
@@ -33,7 +32,6 @@ class _CommentListWidgetState extends State<CommentListWidget> {
 
   @override
   Widget build(BuildContext context) {
-
     final visibleComments = _allComments.take(_visibleCommentsCount).toList();
 
     return Column(
@@ -41,12 +39,23 @@ class _CommentListWidgetState extends State<CommentListWidget> {
       children: [
         Text(
           "Comments about us",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+          style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
               fontFamily: GoogleFonts.raleway().fontFamily
           ),
         ),
         const SizedBox(height: 10),
-        ...visibleComments.map((comment) => _buildCommentTile(comment)),
+        if (visibleComments.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Text(
+              "No comments available",
+              style: TextStyle(color: Colors.grey),
+            ),
+          )
+        else
+          ...visibleComments.map((comment) => _buildCommentTile(comment)),
         const SizedBox(height: 10),
         if (_visibleCommentsCount < _allComments.length)
           Center(

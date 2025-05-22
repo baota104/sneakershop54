@@ -49,8 +49,9 @@ class _AppState extends State<App> {
     child: MultiBlocProvider(
     providers: [
     BlocProvider(create: (_) => LoginCubit(authenticationRepository: _authenticationRepository)),
-    BlocProvider(create: (_) => RegisterCubit(authenticationRepository: _authenticationRepository)), // ✅ Đóng ngoặc đúng
+    BlocProvider(create: (_) => RegisterCubit(authenticationRepository: _authenticationRepository)),
     BlocProvider(create: (_)=> AppCubit(authenticationRepository: _authenticationRepository))
+
     ],
         child: const MyApp()));
   }

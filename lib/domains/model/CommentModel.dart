@@ -6,6 +6,7 @@ class CommentModel {
   final String avatarUrl;
   final String content;
   final double rating;
+  final bool ivisible;
   final DateTime timestamp;
 
   CommentModel({
@@ -14,6 +15,7 @@ class CommentModel {
     required this.avatarUrl,
     required this.content,
     required this.rating,
+    required this. ivisible,
     required this.timestamp,
   });
 
@@ -24,6 +26,7 @@ class CommentModel {
       avatarUrl: map['avatarUrl'] ?? '',
       content: map['content'] ?? '',
       rating: (map['rating'] as num).toDouble(),
+      ivisible:map['ivisible'] ?? false,
       timestamp: (map['timestamp'] as Timestamp).toDate(),
     );
   }
