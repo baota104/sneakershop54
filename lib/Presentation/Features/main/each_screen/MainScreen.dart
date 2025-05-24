@@ -11,6 +11,7 @@ import 'package:sneaker_shop/Presentation/Features/main/each_screen/Menu_Screen.
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/FavoriteScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/notification/NotificationScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/Profile_Screen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/user_bloc.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/search/SearchScreen.dart';
 import 'package:sneaker_shop/domains/data_source/remote/firebase/cart_firebase.dart';
 import 'package:sneaker_shop/domains/data_source/remote/firebase/favorite_firebase.dart';
@@ -18,7 +19,9 @@ import 'package:sneaker_shop/domains/repository/cart_repository.dart';
 import 'package:sneaker_shop/domains/repository/favorite_repository.dart';
 
 import '../../../../domains/data_source/remote/firebase/product_firebase.dart';
+import '../../../../domains/data_source/remote/firebase/user_firebase.dart';
 import '../../../../domains/repository/product_repository.dart';
+import '../../../../domains/repository/user_repository.dart';
 import 'home/Home_product_bloc.dart';
 class MainScreen extends StatelessWidget {
   final int navigatorPage;
@@ -32,6 +35,13 @@ class MainScreen extends StatelessWidget {
         Provider(create: (context) => Productfirebase()),
         Provider(create: (context) => CartFirebase()),
         Provider(create: (context) => FavoriteFirebase()),
+        Provider(create: (context) => UserFirebase()),
+        ProxyProvider<UserFirebase, UserRepository>(
+          update: (context, userFirebase, _) => UserRepository(userFirebase),
+        ),
+        ProxyProvider<UserRepository, UserBloc>(
+          update: (context, repository, _) => UserBloc(repository),
+        ),
         ProxyProvider<Productfirebase, ProductRepository>(
           update: (context, productFirebase, _) => ProductRepository(productFirebase),
         ),
@@ -83,7 +93,7 @@ class _MainScreenBodyState extends State<MainScreenBody> {
       Searchscreen(),
       FavoriteScreen(),
       NotificationscreenContainer(),
-     ProfilescreenContainer()
+     ProfileScreen()
     ];
   }
 

@@ -7,8 +7,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/CartScreen.dart';
+import 'package:sneaker_shop/Presentation/Features/Cart/Googmapicker.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/MainScreen.dart';
 import 'package:sneaker_shop/Presentation/Features/main/each_screen/order/orderscreen.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/user_bloc.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/user_event.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/profile/user_state.dart';
+import 'package:sneaker_shop/Presentation/Widgets/LoadingWidget.dart';
 import 'package:sneaker_shop/domains/model/UserModel.dart';
 
 import '../../Cart/cart_bloc.dart';
@@ -23,41 +28,65 @@ class MenuScreen extends StatefulWidget {
 class _MenuScreenState extends State<MenuScreen> {
   late CartBloc cartBloc;
   late UserModel userModel;
+  late UserBloc userBloc;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     cartBloc = context.read<CartBloc>();
+    userBloc = context.read<UserBloc>();
+    userBloc.add(GetUser());
 
   }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Container(
-          color: Color(0xFF1483C2),
-          constraints: BoxConstraints.expand(),
-          child: SingleChildScrollView(
-            child: Column(
-              // mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                _buildprofile(),
-                _buildMenuItem(Icons.person, "Profile"),
-                _buildMenuItem(Icons.shopping_cart_outlined, "My Cart"),
-                _buildMenuItem(Icons.favorite, "Favorite"),
-                _buildMenuItem(Icons.fire_truck, "Orders"),
-                _buildMenuItem(Icons.notifications, "Notifications"),
-                _buildMenuItem(Icons.settings, "Settings"),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5,horizontal: 40),
-                  child: Divider(color: Colors.white54),
+      body: BlocConsumer<UserBloc, UserStateBase>(
+        bloc: userBloc,
+  listener: (context, state) {
+    if(state is GetUserSuccess){
+      setState(() {
+        userModel = state.userModel;
+      });
+    }
+  },
+  builder: (context, state) {
+          if(state is UserStateLoading){
+            return Center(child: LoadingWidet());
+          }
+          else if(state is GetUserSuccess){
+            return SafeArea(
+              child: Container(
+                color: Color(0xFF1483C2),
+                constraints: BoxConstraints.expand(),
+                child: SingleChildScrollView(
+                  child: Column(
+                    // mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      _buildprofile(),
+                      _buildMenuItem(Icons.person, "Profile"),
+                      _buildMenuItem(Icons.shopping_cart_outlined, "My Cart"),
+                      _buildMenuItem(Icons.favorite, "Favorite"),
+                      _buildMenuItem(Icons.fire_truck, "Orders"),
+                      _buildMenuItem(Icons.notifications, "Notifications"),
+                      _buildMenuItem(Icons.settings, "Settings"),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5,horizontal: 40),
+                        child: Divider(color: Colors.white54),
+                      ),
+                      _buildMenuItem(Icons.logout, "Sign Out"),
+                    ],
+                  ),
                 ),
-                _buildMenuItem(Icons.logout, "Sign Out"),
-              ],
-            ),
-          ),
-        ),
-      ),
+              ),
+            );
+          }
+          else{
+            return Container();
+          }
+
+  },
+),
     );
   }
 
@@ -74,13 +103,13 @@ class _MenuScreenState extends State<MenuScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle, // Đặt hình dạng container thành hình tròn
               ),
-              child: Image.asset(
-                "assets/images/baodeptrai.png",
+              child: Image.network(
+                userModel.imageurl,
                 fit: BoxFit.cover, // Đảm bảo hình ảnh hiển thị đúng tỷ lệ
               ),
             ),
           ),
-          Text("Baodeptrai",
+          Text(userModel.name,
           style: TextStyle(
             fontSize: 20,
             fontFamily: GoogleFonts.raleway().fontFamily,
@@ -109,7 +138,7 @@ class _MenuScreenState extends State<MenuScreen> {
       ),
     );
   }
-  void _navigateToPage(String title) {
+  Future<void> _navigateToPage(String title) async {
     Navigator.pop(context); // Đóng Drawer trước khi chuyển màn hình
     if (title == "Profile") {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(navigatorPage: 4)));
@@ -130,7 +159,8 @@ class _MenuScreenState extends State<MenuScreen> {
     } else if (title == "Notifications") {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(navigatorPage: 3)));
     } else if (title == "Settings") {
-      // Thêm màn hình cài đặt
+
+
     }
     else if(title == "Sign Out"){
 

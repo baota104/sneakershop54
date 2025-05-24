@@ -15,6 +15,7 @@ import 'package:sneaker_shop/domains/model/UserModel.dart';
 import 'package:uuid/uuid.dart';
 
 import '../main/each_screen/MainScreen.dart';
+import 'Googmapicker.dart';
 import 'cart_state.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -248,16 +249,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: TextStyle(fontSize: fontSize, fontFamily: GoogleFonts.poppins().fontFamily),
           ),
           trailing: IconButton(
-            icon: Icon(Icons.check, color: Colors.green, size: fontSize * 1.2),
-            onPressed: () {
-              // setState(() {
-              //   // Gán lại dữ liệu nếu muốn lưu
-              //   userData ??= {};
-              //   userData!["address"] = _addressController.text;
-              // });
+            icon: Icon(Icons.edit, size: fontSize * 1.2),
+            onPressed: () async {
+              final selectedAddress = await Navigator.push<String>(
+                context,
+                MaterialPageRoute(builder: (_) => SearchLocationPage()),
+              );
+
+              if (selectedAddress != null) {
+                print('Địa chỉ đã chọn: $selectedAddress');
+                setState(() {
+                  addressController.text = selectedAddress;
+                });
+                // Gán vào đơn hàng ở đây
+              }
             },
           ),
         ),
+
       ],
     );
   }
@@ -293,7 +302,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             contentPadding: EdgeInsets.zero,
             leading: Icon(Icons.credit_card, color: Colors.black, size: fontSize * 1.2),
             title: Text(selectedPaymentMethod, style: TextStyle(fontSize: fontSize)),
-            subtitle: Text("Chạm để chọn phương thức khác", style: TextStyle(color: Colors.grey, fontSize: fontSize * 0.9)),
+            subtitle: Text("Choose other payments method", style: TextStyle(color: Colors.grey, fontSize: fontSize * 0.9)),
             trailing: Icon(
               isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
               color: Colors.grey,

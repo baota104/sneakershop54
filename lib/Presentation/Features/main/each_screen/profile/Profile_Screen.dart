@@ -22,13 +22,7 @@ class ProfilescreenContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return  MultiProvider(
       providers: [
-        Provider(create: (context) => UserFirebase()),
-        ProxyProvider<UserFirebase, UserRepository>(
-          update: (context, userFirebase, _) => UserRepository(userFirebase),
-        ),
-        ProxyProvider<UserRepository, UserBloc>(
-          update: (context, repository, _) => UserBloc(repository),
-        ),
+
       ],
       child: ProfileScreen(),
     );
@@ -45,7 +39,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String? userId;
-  Map<String, dynamic>? userData;
   late UserModel userModel;
   late UserBloc userBloc;
   @override
