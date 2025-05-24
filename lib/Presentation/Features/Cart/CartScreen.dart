@@ -105,7 +105,7 @@ class _CartScreenState extends State<CartScreen> {
               return Center(child: LoadingWidet());
             }
             return Container(
-              child:Text("ngu vai l")
+
             );
 
           },

@@ -99,17 +99,11 @@ class _ProductCardState extends State<ProductCard> {
                   ),
                   SizedBox(height: 4),
                   Center(
-                    child: Image.network(
-                      widget.product.imageUrl,
-                      width: imageSize,
-                      height: imageSize * 0.6,
-                      fit: BoxFit.fitWidth,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.image_not_supported,
-                        size: imageSize * 0.5,
-                        color: Colors.grey,
-                      ),
-                    ),
+                     child:  StandardizedImage(
+                        imageUrl: widget.product.imageUrls.elementAt(0),
+                        width: imageSize,
+                        height: imageSize * 0.6,
+                      )
                   ),
                   SizedBox(height: 8),
                   if (widget.product.activity.isNotEmpty)
@@ -175,3 +169,34 @@ class _ProductCardState extends State<ProductCard> {
 
 
 }
+
+class StandardizedImage extends StatelessWidget {
+  final String imageUrl;
+  final double width;
+  final double height;
+
+  const StandardizedImage({
+    required this.imageUrl,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: OverflowBox(
+        maxWidth: width * 1.2, // Cho phép vượt quá 20% chiều rộng
+        maxHeight: height,
+        alignment: Alignment.center,
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+}
+
+// Sử dụng trong ProductCard:

@@ -51,7 +51,7 @@ class CartFirebase {
 
             cartItems.add(CartItem(
               pro_id: productId,
-              imageUrl: productData['imageUrl'],
+              imageUrl: productData['imageUrl'][0],
               name: productData['name'],
               price: productData['price']?.toDouble() ?? 0,
               stock: productData['stock'] ?? 0,
@@ -91,7 +91,7 @@ class CartFirebase {
     final productData = productSnapshot.data()!;
     final cartItem = CartItem(
       pro_id: proId,
-      imageUrl: productData['imageUrl'] ?? '',
+      imageUrl: productData['imageUrl'][0] ?? '',
       name: productData['name'] ?? '',
       price: (productData['price'] ?? 0).toDouble(),
       stock: productData['stock']??0,
@@ -249,7 +249,7 @@ class CartFirebase {
         "activity": productData.activity,
         "name": productData.name,
         "price": productData.price,
-        "imageUrl": productData.imageUrl,
+        "imageUrl": productData.imageUrls.elementAt(0),
       });
 
       final favoriteDocRef = _firestore.collection("Favorites").doc(uid);
