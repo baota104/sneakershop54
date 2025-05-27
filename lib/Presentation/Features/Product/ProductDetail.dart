@@ -6,10 +6,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_event.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_state.dart';
+import 'package:sneaker_shop/Presentation/Features/Product/Product3D.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
 import '../../../domains/model/CartModel.dart';
+import '../../../domains/model/FavoriteModel.dart';
 import '../Cart/CartScreen.dart';
+import '../main/each_screen/favorite/favor_bloc.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product; // Nhận ProductModel làm tham số
@@ -27,11 +30,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   final TransformationController _transformationController = TransformationController();
-
+  late FavorBloc favorBloc;
+  late List<FavoriteModel> favoriteModel;
   @override
   void dispose() {
     _pageController.dispose();
     _transformationController.dispose();
+
     super.dispose();
   }
 
@@ -39,8 +44,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
-    isLoved = widget.product.isloved; // Gán trạng thái ban đầu từ sản phẩm
+    isLoved = false;// Gán trạng thái ban đầu từ sản phẩm
     cartBloc = context.read<CartBloc>();
+
   }
   void toggleLove() async {
     final shouldAdd = await showDialog<bool>(
@@ -64,7 +70,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (shouldAdd == true) {
       setState(() {
         cartBloc.add(AddtoFavorite(widget.product));
-        isLoved = true;
       });
 
     }
@@ -370,6 +375,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
 
+           ElevatedButton(onPressed: (){
+             Navigator.push(context, MaterialPageRoute(builder: (context)=> ShoeViewer()));
+           }, child: Text("Watch 3D mode")
+           ),
+
+
           // Nút "Add to Cart"
           ElevatedButton(
             onPressed: () {
@@ -388,45 +399,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
     );
   }
-  void _addtocart(CartItem newItem) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? uid = prefs.getString('uid');
-    if (uid == null) return;
 
-    final cartRef = FirebaseFirestore.instance
-        .collection("Carts")
-        .doc(uid)
-        .collection("cart_items");
-
-    try {
-      // Check nếu sản phẩm đã có thì tăng số lượng (nếu bạn có field quantity)
-      QuerySnapshot existing = await cartRef
-          .where("pro_id", isEqualTo: newItem.pro_id)
-          .limit(1)
-          .get();
-
-      if (existing.docs.isNotEmpty) {
-        print("da co sanr pham roi");
-      } else {
-        await cartRef.add(newItem.toMap());
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("add to cart successfully"),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      print(" Lỗi khi thêm vào giỏ: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("fail to add to cart"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
 }
 class CroppedImage extends StatelessWidget {
   final String imageUrl;

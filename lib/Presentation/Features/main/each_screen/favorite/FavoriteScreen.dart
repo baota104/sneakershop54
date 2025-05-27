@@ -136,16 +136,16 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: Text("Xác nhận"),
-                        content: Text("Bạn có chắc muốn xoá sản phẩm này khỏi yêu thích?"),
+                        title: Text("Confirm"),
+                        content: Text("Do you really want to delete thís item from favorite list?"),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(false),
-                            child: Text("Không"),
+                            child: Text("No"),
                           ),
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(true),
-                            child: Text("Xoá", style: TextStyle(color: Colors.red)),
+                            child: Text("Yes", style: TextStyle(color: Colors.red)),
                           ),
                         ],
                       ),

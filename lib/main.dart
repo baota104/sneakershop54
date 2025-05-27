@@ -73,8 +73,8 @@ class _MyAppState extends State<MyApp> {
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider.value(value: BlocProvider.of<LoginCubit>(context)),  // ✅ Đảm bảo LoginCubit có trong cây widget
-        BlocProvider.value(value: BlocProvider.of<RegisterCubit>(context)), // ✅ Thêm RegisterCubit
+        BlocProvider.value(value: BlocProvider.of<LoginCubit>(context)),
+        BlocProvider.value(value: BlocProvider.of<RegisterCubit>(context)),
         BlocProvider.value(value: BlocProvider.of<AppCubit>(context))
       ],
       child: MaterialApp(

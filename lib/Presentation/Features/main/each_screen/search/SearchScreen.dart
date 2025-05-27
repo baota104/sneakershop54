@@ -28,6 +28,15 @@ class _SearchscreenState extends State<Searchscreen> {
   List<ProductModel> _filteredProducts = [];
   final TextEditingController _searchcontroller = TextEditingController();
 
+  // State cho các bộ lọc
+  RangeValues _priceRange = const RangeValues(0, 1000);
+  double _minPrice = 0;
+  double _maxPrice = 1000;
+  List<int> _selectedSizes = [];
+  List<String> _selectedBrands = [];
+  RangeValues _statusRange = const RangeValues(0, 100);
+  bool _showFilters = false;
+
   @override
   void initState() {
     super.initState();
@@ -52,11 +61,6 @@ class _SearchscreenState extends State<Searchscreen> {
   void _onSearchChanged() {
     _applyFilters();
     setState(() {});
-    // if (_searchcontroller.text.isNotEmpty) {
-    //   _showSearchBottomSheet(context);
-    // } else {
-    //   Navigator.of(context).maybePop(); // Close BottomSheet if open
-    // }
   }
 
   void _applyFilters() {
@@ -78,52 +82,218 @@ class _SearchscreenState extends State<Searchscreen> {
           .toList();
     }
 
+    // Lọc theo khoảng giá
+    filtered = filtered.where((product) =>
+    product.price >= _priceRange.start && product.price <= _priceRange.end).toList();
+
+    // Lọc theo size
+    if (_selectedSizes.isNotEmpty) {
+      filtered = filtered.where((product) =>
+          _selectedSizes.contains(product.size)).toList();
+    }
+
+    // Lọc theo brand
+    if (_selectedBrands.isNotEmpty) {
+      filtered = filtered.where((product) =>
+          _selectedBrands.contains(product.brand)).toList();
+    }
+
+    // Lọc theo tình trạng (%)
+    filtered = filtered.where((product) =>
+    product.status >= _statusRange.start && product.status <= _statusRange.end).toList();
+
     setState(() {
       _filteredProducts = filtered;
     });
   }
 
-  void _showSearchBottomSheet(BuildContext contextchinh) {
+  // Hàm để lấy danh sách các brand duy nhất từ sản phẩm
+  List<String> _getUniqueBrands() {
+    return _allproducts.map((e) => e.brand).toSet().toList();
+  }
+
+  // Hàm để lấy danh sách các size duy nhất từ sản phẩm
+  List<int> _getUniqueSizes() {
+    return _allproducts.map((e) => e.size).toSet().toList()..sort();
+  }
+
+  // Hàm reset tất cả bộ lọc
+  void _resetFilters() {
+    setState(() {
+      _selectedIndex = 0;
+      _priceRange = RangeValues(_minPrice, _maxPrice);
+      _selectedSizes = [];
+      _selectedBrands = [];
+      _statusRange = const RangeValues(0, 100);
+      _searchcontroller.clear();
+      _applyFilters();
+    });
+  }
+
+  // Hàm hiển thị dialog lọc
+  void _showFilterDialog(BuildContext context) {
+    final uniqueBrands = _getUniqueBrands();
+    final uniqueSizes = _getUniqueSizes();
+
     showModalBottomSheet(
-      context: contextchinh,
-      backgroundColor: Colors.white,
+      context: context,
       isScrollControlled: true,
       builder: (context) {
-        return BlocProvider.value(
-          value: cartBloc, // Truyền bloc đúng
-          child: SafeArea(
-            child: Container(
-              padding: EdgeInsets.all(16),
-              height: MediaQuery.of(context).size.height * 0.75,
-              child: _filteredProducts.isEmpty
-                  ? Center(child: Text("Không tìm thấy sản phẩm"))
-                  : GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.75,
-                ),
-                itemCount: _filteredProducts.length,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        contextchinh,
-                        MaterialPageRoute(
-                          builder: (context) => BlocProvider.value(
-                            value: cartBloc,
-                            child: ProductDetailScreen(product: _filteredProducts[index]),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              padding: const EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Filters",
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: GoogleFonts.poppins().fontFamily,
                           ),
                         ),
-                      );
-                    },
-                    child: ProductCard(product: _filteredProducts[index]),
-                  );
-                },
+                        TextButton(
+                          onPressed: _resetFilters,
+                          child: Text(
+                            "Reset All",
+                            style: TextStyle(color: Colors.blue),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Divider(),
+
+                    // Lọc theo giá
+                    Text(
+                      "Price Range",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    RangeSlider(
+                      values: _priceRange,
+                      min: _minPrice,
+                      max: _maxPrice,
+                      divisions: 10,
+                      labels: RangeLabels(
+                        '\$${_priceRange.start.toStringAsFixed(0)}',
+                        '\$${_priceRange.end.toStringAsFixed(0)}',
+                      ),
+                      onChanged: (RangeValues values) {
+                        setState(() {
+                          _priceRange = values;
+                        });
+                      },
+                    ),
+                    SizedBox(height: 20),
+
+                    // Lọc theo tình trạng (%)
+                    Text(
+                      "Condition (%)",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    RangeSlider(
+                      values: _statusRange,
+                      min: 0,
+                      max: 100,
+                      divisions: 10,
+                      labels: RangeLabels(
+                        '${_statusRange.start.toStringAsFixed(0)}%',
+                        '${_statusRange.end.toStringAsFixed(0)}%',
+                      ),
+                      onChanged: (RangeValues values) {
+                        setState(() {
+                          _statusRange = values;
+                        });
+                      },
+                    ),
+                    SizedBox(height: 20),
+
+                    // Lọc theo size
+                    Text(
+                      "Sizes",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      children: uniqueSizes.map((size) {
+                        final isSelected = _selectedSizes.contains(size);
+                        return FilterChip(
+                          label: Text(size.toString()),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedSizes.add(size);
+                              } else {
+                                _selectedSizes.remove(size);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: 20),
+
+                    // Lọc theo brand
+                    Text(
+                      "Brands",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      children: uniqueBrands.map((brand) {
+                        final isSelected = _selectedBrands.contains(brand);
+                        return FilterChip(
+                          label: Text(brand),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedBrands.add(brand);
+                              } else {
+                                _selectedBrands.remove(brand);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: 20),
+
+                    // Nút áp dụng
+                    ElevatedButton(
+                      onPressed: () {
+                        _applyFilters();
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 50),
+                      ),
+                      child: Text("Apply Filters"),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -195,27 +365,38 @@ class _SearchscreenState extends State<Searchscreen> {
             _buildSearchField(),
             if (!isSearching) ...[
               _buildCategoryField(),
+              _buildFilterButton(),
               Expanded(child: _buildListProduct()),
             ] else ...[
               Expanded(child: _buildSearchResultsContainer()),
-              // TextButton(
-              //   onPressed: () {
-              //     _searchcontroller.clear();
-              //     FocusScope.of(context).unfocus(); // đóng bàn phím
-              //     setState(() {}); // cập nhật lại trạng thái
-              //   },
-              //   child: Text(
-              //     "Cancel",
-              //     style: TextStyle(color: Colors.blue),
-              //   ),
-              // ),
             ],
           ],
         ),
       ),
     );
   }
-
+  Widget _buildFilterButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          ElevatedButton.icon(
+            onPressed: () => _showFilterDialog(context),
+            icon: Icon(Icons.filter_alt),
+            label: Text("Filters"),
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.black, backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: Colors.grey),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
   Widget _buildSearchField() {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 20, horizontal: 20),

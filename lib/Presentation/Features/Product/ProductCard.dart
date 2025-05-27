@@ -5,11 +5,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_bloc.dart';
 import 'package:sneaker_shop/Presentation/Features/Cart/cart_event.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/favor_event.dart';
+import 'package:sneaker_shop/Presentation/Features/main/each_screen/favorite/favor_state.dart';
 import 'package:sneaker_shop/domains/data_source/remote/firebase/user_firebase.dart';
+import 'package:sneaker_shop/domains/model/FavoriteModel.dart';
 import 'package:sneaker_shop/domains/model/ProductModel.dart';
 
 import '../../../domains/model/CartModel.dart';
 import '../Cart/cart_state.dart';
+import '../main/each_screen/favorite/favor_bloc.dart';
 
 class ProductCard extends StatefulWidget {
   final ProductModel product; // Nhận ProductModel làm tham số
@@ -22,13 +26,16 @@ class ProductCard extends StatefulWidget {
 class _ProductCardState extends State<ProductCard> {
   late bool isLoved; // Trạng thái yêu thích
   late CartBloc cartBloc;
-  final UserFirebase _userFirebase= UserFirebase();
+  late FavorBloc favorBloc;
+  late List<FavoriteModel> favoriteModel;
 
   @override
   void initState() {
     super.initState();
-    isLoved = widget.product.isloved; // Gán trạng thái từ productd
+    isLoved=false;
     cartBloc = context.read<CartBloc>();
+    favorBloc = context.read<FavorBloc>();
+    favorBloc.add(FetchListFavor());
   }
 
   void toggleLove() async {
@@ -53,7 +60,6 @@ class _ProductCardState extends State<ProductCard> {
     if (shouldAdd == true) {
       setState(() {
         cartBloc.add(AddtoFavorite(widget.product));
-        isLoved = true;
       });
 
     }
@@ -63,7 +69,18 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
-    return   LayoutBuilder(
+    return   BlocListener<FavorBloc, FavorStateBase>(
+  listener: (context, state) {
+    if(state is FetchListFavorrSuccess){
+      favoriteModel = state.listFavor;
+      final currentProductId = widget.product.productId;
+
+      setState(() {
+        isLoved = favoriteModel.any((favor) => favor.pro_id == currentProductId);
+      });
+    }
+  },
+  child: LayoutBuilder(
           builder: (context, constraints) {
             double width = constraints.maxWidth * 0.9;
             double imageSize = width * 0.8;
@@ -164,7 +181,8 @@ class _ProductCardState extends State<ProductCard> {
               ),
             );
           },
-        );
+        ),
+);
   }
 
 

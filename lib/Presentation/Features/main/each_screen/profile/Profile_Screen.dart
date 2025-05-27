@@ -15,19 +15,19 @@ import 'package:sneaker_shop/domains/model/UserModel.dart';
 
 import '../../../../../domains/repository/user_repository.dart';
 
-class ProfilescreenContainer extends StatelessWidget {
-  const ProfilescreenContainer({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return  MultiProvider(
-      providers: [
-
-      ],
-      child: ProfileScreen(),
-    );
-  }
-}
+// class ProfilescreenContainer extends StatelessWidget {
+//   const ProfilescreenContainer({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return  MultiProvider(
+//       providers: [
+//
+//       ],
+//       child: ProfileScreen(),
+//     );
+//   }
+// }
 
 
 class ProfileScreen extends StatefulWidget {
@@ -39,30 +39,15 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String? userId;
-  late UserModel userModel;
+  UserModel? userModel; // Make it nullable
   late UserBloc userBloc;
+
   @override
   void initState() {
     super.initState();
     userBloc = context.read<UserBloc>();
     userBloc.add(GetUser());
   }
-
-  /// Lấy UID từ SharedPreferences và truy vấn Firestore
-  Future<void> _loadUserData() async {
-    UserFirebase userFirebase = UserFirebase();
-    final user = await userFirebase.getUser();
-    if (user != null) {
-      setState(() {
-        userModel= user;
-      });
-    } else {
-      print("No user data found.");
-      // Optionally show a snackbar or redirect
-    }
-
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -83,29 +68,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: BlocConsumer<UserBloc, UserStateBase>(
         bloc: userBloc,
         listener: (context, state) {
-
-   if(state is GetUserSuccess){
-     setState(() {
-       userModel = state.userModel;
-     });
-   }
-  },
-  builder: (context, state) {
-  if(state is GetUserSuccess){
-    print("getsuccess");
-    return _buildprofilescreen();
-  }
-  else if(state is GetUserError){
-    print("loi fetch user");
-    return Container();
-  }
-  else if(state is UserStateLoading){
-    return Center(child: LoadingWidet(),);
-  }
-  return Container();
-
-  },
-),
+          if(state is GetUserSuccess){
+            setState(() {
+              userModel = state.userModel;
+            });
+          }
+        },
+        builder: (context, state) {
+          if(state is GetUserSuccess){
+            return _buildprofilescreen();
+          }
+          else if(state is GetUserError){
+            return Center(child: Text("Error loading profile"));
+          }
+          return Center(child: LoadingWidet());
+        },
+      ),
     );
   }
 
@@ -116,13 +94,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _buildprofile(),
-          _builditemfield("Your Name", userModel!.name  ?? "N/A"),
+          _builditemfield("Your Name", userModel?.name ?? "N/A"),
           SizedBox(height: 5),
-          _builditemfield("Email Address", userModel!.email ?? "N/A"),
+          _builditemfield("Email Address", userModel?.email ?? "N/A"),
           SizedBox(height: 5),
-          _builditemfield("Phone Number", userModel!.phone ?? "N/A"),
+          _builditemfield("Phone Number", userModel?.phone ?? "N/A"),
           SizedBox(height: 5),
-          _builditemfield("Address", userModel!.address ?? "N/A"),
+          _builditemfield("Address", userModel?.address ?? "N/A"),
           SizedBox(height: 25),
           _buildpassfield(),
           _buildeditbutton(),
@@ -142,13 +120,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             shape: BoxShape.circle,
           ),
           child: Image.network(
-           userModel == null ? "https://bookvexe.vn/wp-content/uploads/2023/04/chon-loc-25-avatar-facebook-mac-dinh-chat-nhat_2.jpg":userModel!.imageurl ,
+            userModel?.imageurl ?? "https://bookvexe.vn/wp-content/uploads/2023/04/chon-loc-25-avatar-facebook-mac-dinh-chat-nhat_2.jpg",
             fit: BoxFit.cover,
           ),
         ),
       ),
     );
   }
+
+
 
   Widget _builditemfield(String title, String content) {
     return Container(
@@ -263,7 +243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 MaterialPageRoute(
                   builder: (context) => BlocProvider.value(
                     value: userBloc,
-                    child: EditInfoscreen(userData: userModel),
+                    child: EditInfoscreen(userData: userModel!),
                   ),
                 ),
             );

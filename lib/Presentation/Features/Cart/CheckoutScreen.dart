@@ -15,7 +15,7 @@ import 'package:sneaker_shop/domains/model/UserModel.dart';
 import 'package:uuid/uuid.dart';
 
 import '../main/each_screen/MainScreen.dart';
-import 'Googmapicker.dart';
+import 'map/Googmapicker.dart';
 import 'cart_state.dart';
 
 class CheckoutScreen extends StatefulWidget {

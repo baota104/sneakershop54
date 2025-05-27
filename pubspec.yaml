@@ -54,6 +54,9 @@ dependencies:
   flutter_map: ^8.1.1
   latlong2: ^0.9.1
   http: ^1.4.0
+  dio: ^5.8.0+1
+  model_viewer_plus: ^1.9.3
+  android_intent_plus: ^5.0.1
 
 
 
@@ -96,6 +99,8 @@ flutter:
     - assets/images/success.png
     - assets/images/map1.png
     - assets/images/delete.png
+    - assets/images/new_balance.glb
+    - assets/images/used_new_balance_574_classic______free.glb
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
